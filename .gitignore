@@ -1,0 +1,54 @@
+## [Visual Studio / C#]
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa]rm/
+[Aa]rm64/
+bbin/
+bin/
+obj/
+
+# Visual Studio Cache/Config
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.vstoken
+
+# NuGet Packages
+*.nuget.props
+*.nuget.targets
+packages/
+
+# Roslyn cache directories
+.vs/
+
+## [MQL5]
+# Compiled binaries
+*.ex5
+
+# Logs
+*.log
+*log.txt
+_log/
+MQL5/Logs/
+_doc/gemini/history/
+
+# Temporary files
+_temp/
+*.tmp
+*.bak
+
+## [Common]
+.DS_Store
+Thumbs.db
+
+build_log.txt
+
+_doc/gemini/tmp/
+_doc/gemini/history/
