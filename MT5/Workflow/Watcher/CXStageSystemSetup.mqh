@@ -1,4 +1,4 @@
-﻿#ifndef CXSTAGESYSTEMSETUP_MQH
+#ifndef CXSTAGESYSTEMSETUP_MQH
 #define CXSTAGESYSTEMSETUP_MQH
 
 #include "..\..\Core\Interfaces\IXStage.mqh"
@@ -35,6 +35,8 @@ public:
     virtual int OnProcess(ICXParam* xp, ICXContext* ctx) override {
         // [v18.42] 부트스트랩 로그는 CXAppService::Initialize()에서 동시 출력을 위해 선처리됨.
         // 이 스테이지는 시스템이 준비되었음을 확인하는 라우팅 게이트웨이 역할만 수행.
+        // [v2.2 Guard] NULL 포인터 방어: Bind 실패 시 STAGE_SUCCESS로 bypass
+        if(IS_INVALID(m_orchestrator)) return STAGE_SUCCESS;
         return m_orchestrator.ResolveId("WATCHER_ENTRY_DISCOVERY");
     }
 

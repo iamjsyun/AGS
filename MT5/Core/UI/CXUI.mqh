@@ -19,7 +19,7 @@ struct MqlUIElement {
 
 /**
  * @class CXUI
- * @brief ATSE 차트 화면 내 실시간 세션 정보 대시보드 가시화 컴포넌트
+ * @brief AGS 차트 화면 내 실시간 세션 정보 대시보드 가시화 컴포넌트
  */
 class CXUI : public CObject {
 private:

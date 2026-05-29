@@ -19,6 +19,11 @@ public:
     virtual bool Inspect(ICXContext* globalCtx, ICXSequenceOrchestrator* orchestrator) = 0;
     
     /**
+     * @brief 기동 전 환경(파일 및 확장자) 선제 검증
+     */
+    virtual bool AuditEnvironment(string scenarioFile) = 0;
+    
+    /**
      * @brief 검사 결과 상세 리포트 획득
      */
     virtual string GetDetailedReport() const = 0;

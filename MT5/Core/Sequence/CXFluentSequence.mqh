@@ -39,7 +39,7 @@ public:
 
 /**
  * @class CXFluentSequence
- * @brief ATSE 고도화 로직을 반영한 인터페이스 기반 시퀀스 엔진
+ * @brief AGS 고도화 로직을 반영한 인터페이스 기반 시퀀스 엔진
  */
 class CXFluentSequence : public ICXFluentSequence {
 private:

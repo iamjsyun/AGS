@@ -67,14 +67,14 @@ TICK: 10 > MARKET: price : price=2340.00
 Files/ATSE/
 ├── scenario_manifest.json          # 테스트 전체 대상 매니페스트 파일
 ├── Core/                           # 1. 인프라 검증 (Bootstrap, DI, Fail-Fast)
-│   ├── test_di_failure.tsdl
-│   └── test_param_dual_binding.tsdl
+│   ├── test_di_failure.tsd
+│   └── test_param_dual_binding.tsd
 ├── Trade/                          # 2. 거래 흐름 검증 (Trailing Entry/Stop, Entry Validation)
-│   ├── test_trailing_entry.tsdl
-│   └── test_broker_sl_tp.tsdl
+│   ├── test_trailing_entry.tsd
+│   └── test_broker_sl_tp.tsd
 ├── Resilience/                     # 3. 예외 복구 검증 (Disconnect, Timeout, Requote, Slippage)
-│   ├── test_order_cancel_timeout.tsdl
-│   └── test_margin_call_guard.tsdl
+│   ├── test_order_cancel_timeout.tsd
+│   └── test_margin_call_guard.tsd
 └── Custom/                         # 4. 사용자 정의/임시 디버깅용 시나리오
 ```
 
@@ -91,19 +91,19 @@ Files/ATSE/
   "scenarios": [
     {
       "id": "SCEN_CORE_01",
-      "file": "Core/test_di_failure.tsdl",
+      "file": "Core/test_di_failure.tsd",
       "priority": "Critical",
       "timeout_ticks": 50
     },
     {
       "id": "SCEN_TRADE_01",
-      "file": "Trade/test_trailing_entry.tsdl",
+      "file": "Trade/test_trailing_entry.tsd",
       "priority": "High",
       "timeout_ticks": 100
     },
     {
       "id": "SCEN_RESILIENCE_07",
-      "file": "Resilience/test_order_cancel_timeout.tsdl",
+      "file": "Resilience/test_order_cancel_timeout.tsd",
       "priority": "Critical",
       "timeout_ticks": 150
     }

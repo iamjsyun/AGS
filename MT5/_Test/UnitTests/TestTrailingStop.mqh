@@ -13,6 +13,7 @@
 
 #include "..\..\Workflow\Tasks\Trailing\CXTaskTrail_R_Execute.mqh"
 #include "..\Mocks\MockOrderManager.mqh"
+#include "..\Mocks\MockSymbolManager.mqh"
 
 class TestTrailingStop {
 public:
@@ -21,19 +22,22 @@ public:
         bool allPassed = true;
         
         CXContext ctx;
-        CXVirtualPricer pricer("GOLDF#", 0.01);
+        CXVirtualPricer pricer("GOLD#", 0.01);
+        pricer.InitModel("Linear", 2350.00, 0);
         MockPriceManager priceMgr(NULL);
         priceMgr.SetPricer(GetPointer(pricer));
         MockTerminalPlatform terminal;
         MockOrderManager orderMgr;
+        MockSymbolManager symMgr;
         
         ctx.Register("price_mgr", GetPointer(priceMgr));
         ctx.Register("terminal_platform", GetPointer(terminal));
         ctx.Register("order_mgr", GetPointer(orderMgr));
+        ctx.Register("sym_mgr", GetPointer(symMgr));
         
         CXParam xp;
         CXSignal sig;
-        sig.SetSymbol("GOLDF#");
+        sig.SetSymbol("GOLD#");
         sig.SetDir(CX_DIR_BUY);
         sig.SetType(ORDER_TYPE_BUY);
         sig.SetPriceOpen(2350.00);
@@ -48,8 +52,11 @@ public:
         CXTaskTrail_L_Evaluate taskEval(TRAIL_MODE_EXIT);
         CXTaskTrail_R_Execute  taskExec(TRAIL_MODE_EXIT);
         
-        if(!taskExec.Bind(GetPointer(ctx))) {
-            Print("  [FAIL] Failed to bind context to CXTaskTrail_R_Execute.");
+        if(!taskAct.Bind(GetPointer(ctx)) ||
+           !taskExt.Bind(GetPointer(ctx)) ||
+           !taskEval.Bind(GetPointer(ctx)) ||
+           !taskExec.Bind(GetPointer(ctx))) {
+            Print("  [FAIL] Failed to bind context to trailing stop tasks.");
             return false;
         }
 

@@ -1,4 +1,4 @@
-# test_margin_call_guard.tsdl
+# test_margin_call_guard.tsd
 SCENARIO: SCEN_MARGIN_GUARD_01 : "Margin/Lot Safety Guard Rejection Validation"
 DEFINE: SYMBOL=GOLDF#, CNO=1005, SNO=01, GNO=01, DIR=1, TYPE=0
 

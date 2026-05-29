@@ -1,4 +1,4 @@
-# test_reconnect_resume.tsdl
+# test_reconnect_resume.tsd
 SCENARIO: SCEN_RECONNECT_RESUME_01 : "Broker Reconnection Trailing Session Resume Guard"
 DEFINE: SYMBOL=GOLDF#, CNO=1006, SNO=01, GNO=01, DIR=1, TYPE=0
 

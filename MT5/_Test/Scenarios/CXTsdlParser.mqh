@@ -216,14 +216,16 @@ private:
     }
 
     /**
-     * @brief 샵(#) 뒤 주석 문자열 제거
+     * @brief [v1.2] 독립 주석 라인(#으로 시작) 처리
+     * 주의: GOLDF# 등 심볼명에 '#'이 포함될 수 있으므로,
+     * '#'이 라인의 첫 번째 비공백 문자인 경우에만 전체 라인을 주석으로 처리.
+     * 값 내부의 '#'(예: GOLDF#)은 주석으로 취급하지 않는다.
      */
     static string TrimComment(string line) {
-        int pos = StringFind(line, "#");
-        if(pos >= 0) {
-            line = StringSubstr(line, 0, pos);
-        }
-        return Trim(line);
+        string trimmed = Trim(line);
+        // '#'이 첫 번째 비공백 문자인 경우에만 comment로 처리
+        if(StringLen(trimmed) > 0 && StringSubstr(trimmed, 0, 1) == "#") return "";
+        return trimmed;
     }
 
     /**
@@ -343,15 +345,13 @@ private:
 
 public:
     /**
-     * @brief TSDL 파일을 열어 파싱하여 시나리오 객체 반환
+     * @brief TSDL 파일을 열어 파싱하여 시나리오 객체 반환 (FILE_COMMON 전용)
      */
     static CXTsdlScenario* Parse(string filename) {
-        int handle = FileOpen(filename, FILE_READ|FILE_TXT|FILE_ANSI);
+        int handle = FileOpen(filename, FILE_READ|FILE_TXT|FILE_ANSI|FILE_COMMON);
+        
         if(handle == INVALID_HANDLE) {
-            handle = FileOpen(filename, FILE_READ|FILE_TXT);
-        }
-        if(handle == INVALID_HANDLE) {
-            PrintFormat("[TSDL-PARSER] ERROR: Failed to open scenario file '%s'. Error: %d", filename, GetLastError());
+            PrintFormat("[TSDL-PARSER] ERROR: Failed to open scenario file '%s' in FILE_COMMON. Error: %d", filename, GetLastError());
             return NULL;
         }
 

@@ -1,4 +1,4 @@
-﻿#ifndef APPORCHESTRATOR_MQH
+#ifndef APPORCHESTRATOR_MQH
 #define APPORCHESTRATOR_MQH
 
 #include "..\..\Core\Sequence\CXSequenceOrchestrator.mqh"
@@ -24,13 +24,13 @@ public:
     }
 
     /**
-     * @brief [v19.31] 시스템 공통 시퀀스 등록 (Bootstrap)
+     * @brief [v19.32] 시스템 공통 시퀀스 등록 (Bootstrap) - m_system_map에 등록하여 Watcher와 시작점 분리
      */
     void InitSystemMap() {
         string systemDsl[] = {
             "SYS_BOOTSTRAP             > SystemSetup        ? WATCHER_ENTRY_DISCOVERY  ! SYS_ERROR"
         };
-        BuildFromDSL(systemDsl, m_watcher_map);
+        BuildFromDSL(systemDsl, m_system_map);  // [v19.32] m_watcher_map 분리 -> Watcher는 ENTRY_DISCOVERY에서만 시작
     }
 
 protected:

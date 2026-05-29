@@ -47,6 +47,8 @@ private:
     IXGuard*              m_guard;
     IXTerminalPlatform*   m_terminalPlatform;
     ICXPriceManager*      m_priceManager;
+    ICXSymbolManager*     m_symbolManager;
+    ICXRiskManager*       m_riskManager;
     IXExitManager*        m_exitManager;
     CXUI*                 m_ui;
     ICXIntegrityGuard*    m_integrityGuard; // [v2.1] Independent Inspector
@@ -60,25 +62,19 @@ public:
     CXAppService() : m_config(NULL), m_db(NULL), m_repo(NULL), m_assetManager(NULL), 
                     m_factory(NULL), m_watcher(NULL), m_logger(NULL), m_globalContext(NULL),
                     m_orchestrator(NULL), m_guard(NULL), m_terminalPlatform(NULL),
-                    m_priceManager(NULL), m_exitManager(NULL), m_ui(NULL), m_integrityGuard(NULL),
+                    m_priceManager(NULL), m_symbolManager(NULL), m_riskManager(NULL),
+                    m_exitManager(NULL), m_ui(NULL), m_integrityGuard(NULL),
                     m_lastWatcherScanTime(0), m_lastAssetPulseTime(0), m_lastUiRefreshTime(0) {}
 
     virtual ~CXAppService() override {
         SAFE_DELETE(m_ui);
         SAFE_DELETE(m_integrityGuard);
         SAFE_DELETE(m_watcher);
-        SAFE_DELETE(m_assetManager);
-        SAFE_DELETE(m_repo);
-        SAFE_DELETE(m_db);
-        SAFE_DELETE(m_config);
-        SAFE_DELETE(m_globalContext);
-        SAFE_DELETE(m_logger);
-        SAFE_DELETE(m_orchestrator);
-        SAFE_DELETE(m_guard);
-        SAFE_DELETE(m_terminalPlatform);
-        SAFE_DELETE(m_priceManager);
-        SAFE_DELETE(m_exitManager);
         SAFE_DELETE(m_pulseParam);
+        // [v2.2 Fix] exit_mgr을 Context가 소유하지 않도록 managed=false로 등록 후 여기서 명시적 삭제
+        // CHashMap<string,CObject*>::CopyTo 한계로 CXContext가 정상 삭제하지 못하는 문제 향구쳐
+        SAFE_DELETE(m_exitManager);
+        SAFE_DELETE(m_globalContext);
     }
 
     virtual bool Initialize(ICXConfig* config, ICXServiceFactory* factory) override {
@@ -103,18 +99,22 @@ public:
         m_orchestrator = new AppOrchestrator();
         m_guard = new CXGuard(m_globalContext);
         m_terminalPlatform = m_factory.CreateTerminalPlatform(m_globalContext);
+        m_symbolManager = m_factory.CreateSymbolManager(m_globalContext);
         m_priceManager = m_factory.CreatePriceManager(m_globalContext);
+        m_riskManager = m_factory.CreateRiskManager(m_globalContext);
         m_exitManager = m_factory.CreateExitManager(m_globalContext);
         m_pulseParam = new CXParam();
 
-        m_globalContext.Register("logger", m_logger);
-        m_globalContext.Register("global_logger", m_logger); // [v18.32] For cross-module system logging
-        m_globalContext.Register("config", m_config);
-        m_globalContext.Register("orchestrator", m_orchestrator);
-        m_globalContext.Register("guard", m_guard);
-        m_globalContext.Register("terminal_platform", m_terminalPlatform);
-        m_globalContext.Register("price_mgr", m_priceManager);
-        m_globalContext.Register("exit_mgr", m_exitManager);
+        m_globalContext.Register("logger", m_logger, true);
+        m_globalContext.Register("global_logger", m_logger, false); // [v18.32] For cross-module system logging (alias, do not delete)
+        m_globalContext.Register("config", m_config, true);
+        m_globalContext.Register("orchestrator", m_orchestrator, true);
+        m_globalContext.Register("guard", m_guard, true);
+        m_globalContext.Register("terminal_platform", m_terminalPlatform, true);
+        m_globalContext.Register("sym_mgr", m_symbolManager, true);
+        m_globalContext.Register("price_mgr", m_priceManager, true);
+        m_globalContext.Register("risk_mgr", m_riskManager, true);
+        m_globalContext.Register("exit_mgr", m_exitManager, false);  // [v2.2] 소유권은 m_exitManager에 유지, Context는 참조만
 
         m_db = m_factory.CreateDatabase();
         if(IS_INVALID(m_db) || !m_db.Open(m_config.GetDatabaseName(), m_config.IsDatabaseCommon())) return false;
@@ -127,14 +127,15 @@ public:
         
         m_repo = m_factory.CreateRepository(m_db);
         if(IS_INVALID(m_repo)) return false;
-        m_globalContext.Register("db", m_db);
-        m_globalContext.Register("repo", m_repo);
+        m_globalContext.Register("db", m_db, true);
+        m_globalContext.Register("repo", m_repo, true);
 
         m_assetManager = new CXAssetManager();
         m_assetManager.Initialize(m_repo, m_globalContext, m_factory);
-        m_globalContext.Register("asset_mgr", m_assetManager);
+        m_globalContext.Register("asset_mgr", m_assetManager, true);
 
         m_watcher = new CXSignalWatcher(m_repo, m_config, m_assetManager, m_globalContext, m_factory, "Unified");
+        if(IS_INVALID(m_watcher) || !m_watcher.Bind()) return false;
 
         m_ui = new CXUI(m_globalContext);
         if(IS_VALID(m_ui)) m_ui.Initialize();

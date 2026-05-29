@@ -5,7 +5,8 @@
 #include "..\..\Core\Models\CXContext.mqh"
 #include "..\..\Core\Models\CXParam.mqh"
 #include "..\..\Core\Models\CXSignal.mqh"
-#include "..\Mocks\MockTerminalPlatform.mqh"
+#include "..\Mocks\MockAssetManager.mqh"
+#include "..\Mocks\MockRepository.mqh"
 
 class TestManualExitBypass {
 public:
@@ -14,8 +15,11 @@ public:
         bool allPassed = true;
         
         CXContext ctx;
-        MockTerminalPlatform terminal;
-        ctx.Register("terminal_platform", GetPointer(terminal));
+        MockAssetManager assetMgr;
+        MockRepository repo;
+        
+        ctx.Register("asset_mgr", GetPointer(assetMgr));
+        ctx.Register("repo", GetPointer(repo));
         
         CXParam xp;
         CXSignal sig;
@@ -23,13 +27,17 @@ public:
         sig.SetSid("TEST-MANUAL-01");
         sig.SetTicket(99001);
         sig.SetStatus(XE_EXECUTED);
-        sig.xa_exit = XA_RAW; // No exit intent yet
+        sig.SetXAExit(XA_RAW); // No exit intent yet
         xp.SetSignal(GetPointer(sig));
         
         CXTaskIntentWatch task;
+        if(!task.Bind(GetPointer(ctx))) {
+            Print("  [FAIL] Failed to bind context.");
+            return false;
+        }
         
         // 1. Asset exists -> Continue
-        terminal.InjectMockAsset(true, 99001, "TEST-MANUAL-01", "GOLDF#", 1001, CX_DIR_BUY, 0.1, 2350.00, 0, 0);
+        assetMgr.SetPositionExists(true);
         int res = task.Execute(GetPointer(xp), GetPointer(ctx));
         if(res == TASK_CONTINUE) {
             Print("  [PASS] Task continues when asset exists.");
@@ -39,7 +47,7 @@ public:
         }
         
         // 2. Asset disappears (Manual Exit) -> Bypass to Closed
-        terminal.SweepBySid(GetPointer(xp), 1001, "TEST-MANUAL-01"); // Simulate terminal asset removal
+        assetMgr.SetPositionExists(false);
         res = task.Execute(GetPointer(xp), GetPointer(ctx));
         
         if(sig.GetStatus() == XE_CLOSED_MANUAL && sig.GetXAExit() == XA_CLOSED_COMPLETED) {

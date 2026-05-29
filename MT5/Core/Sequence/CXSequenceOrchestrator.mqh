@@ -17,6 +17,7 @@ protected:
     CArrayObj*             m_watcher_map;       // Entry Watcher Map
     CArrayObj*             m_watcher_exit_map;  // Exit Watcher Map
     CArrayObj*             m_session_map;
+    CArrayObj*             m_system_map;        // [v19.32] Bootstrap-only Map (Watcher와 분리)
     CHashMap<string, int>* m_registry;
     int                    m_auto_id_counter;
 
@@ -25,6 +26,7 @@ public:
         m_watcher_map = new CArrayObj();
         m_watcher_exit_map = new CArrayObj();
         m_session_map = new CArrayObj();
+        m_system_map = new CArrayObj();  // [v19.32]
         m_registry = new CHashMap<string, int>();
         m_auto_id_counter = 1000;
     }
@@ -33,6 +35,7 @@ public:
         SAFE_DELETE(m_watcher_map);
         SAFE_DELETE(m_watcher_exit_map);
         SAFE_DELETE(m_session_map);
+        SAFE_DELETE(m_system_map);  // [v19.32]
         SAFE_DELETE(m_registry);
     }
 

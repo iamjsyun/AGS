@@ -1,4 +1,4 @@
-# test_partial_fill.tsdl
+# test_partial_fill.tsd
 SCENARIO: SCEN_PARTIAL_FILL_01 : "Limit Order Partial Fill Dynamic Realignment"
 DEFINE: SYMBOL=GOLDF#, CNO=1007, SNO=01, GNO=01, DIR=1, TYPE=1
 

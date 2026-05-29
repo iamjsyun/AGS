@@ -4,112 +4,112 @@
   "scenarios": [
     {
       "id": "SCEN_CORE_DUP_SID",
-      "file": "Core/test_duplicate_sid.tsdl",
+      "file": "Core/test_duplicate_sid.tsd",
       "priority": "Critical"
     },
     {
       "id": "SCEN_TRADE_ADV_EXIT",
-      "file": "Trade/test_advanced_exit.tsdl",
+      "file": "Trade/test_advanced_exit.tsd",
       "priority": "High"
     },
     {
       "id": "SCEN_TRADE_BROKER_SL_TP",
-      "file": "Trade/test_broker_sl_tp.tsdl",
+      "file": "Trade/test_broker_sl_tp.tsd",
       "priority": "High"
     },
     {
       "id": "SCEN_TRADE_GOLDEN_PATH",
-      "file": "Trade/test_golden_path.tsdl",
+      "file": "Trade/test_golden_path.tsd",
       "priority": "Critical"
     },
     {
       "id": "SCEN_TRADE_MANUAL_EXIT",
-      "file": "Trade/test_manual_exit.tsdl",
+      "file": "Trade/test_manual_exit.tsd",
       "priority": "Critical"
     },
     {
       "id": "SCEN_TRADE_PENDING_EXIT",
-      "file": "Trade/test_pending_exit.tsdl",
+      "file": "Trade/test_pending_exit.tsd",
       "priority": "Medium"
     },
     {
       "id": "SCEN_TRADE_POSITION_EXIT",
-      "file": "Trade/test_position_exit.tsdl",
+      "file": "Trade/test_position_exit.tsd",
       "priority": "Medium"
     },
     {
       "id": "SCEN_TRADE_TRAILING_ENTRY_EXIT",
-      "file": "Trade/test_trailing_entry_exit.tsdl",
+      "file": "Trade/test_trailing_entry_exit.tsd",
       "priority": "High"
     },
     {
       "id": "SCEN_TRADE_TRAILING_ENTRY_LIMIT",
-      "file": "Trade/test_trailing_entry_limit.tsdl",
+      "file": "Trade/test_trailing_entry_limit.tsd",
       "priority": "High"
     },
     {
       "id": "SCEN_TRADE_TRAILING_ENTRY_REBOUND",
-      "file": "Trade/test_trailing_entry_rebound.tsdl",
+      "file": "Trade/test_trailing_entry_rebound.tsd",
       "priority": "High"
     },
     {
       "id": "SCEN_TRADE_TRAILING_STOP_EXIT",
-      "file": "Trade/test_trailing_stop_exit.tsdl",
+      "file": "Trade/test_trailing_stop_exit.tsd",
       "priority": "High"
     },
     {
       "id": "SCEN_TRADE_VOID_EXIT",
-      "file": "Trade/test_void_exit.tsdl",
+      "file": "Trade/test_void_exit.tsd",
       "priority": "Medium"
     },
     {
       "id": "SCEN_TRADE_SLIPPAGE_CONTROL",
-      "file": "Trade/test_slippage_control.tsdl",
+      "file": "Trade/test_slippage_control.tsd",
       "priority": "Medium"
     },
     {
       "id": "SCEN_RESILIENCE_MARGIN_CALL",
-      "file": "Resilience/test_margin_call_guard.tsdl",
+      "file": "Resilience/test_margin_call_guard.tsd",
       "priority": "High"
     },
     {
       "id": "SCEN_RESILIENCE_ORDER_CANCEL_TIMEOUT",
-      "file": "Resilience/test_order_cancel_timeout.tsdl",
+      "file": "Resilience/test_order_cancel_timeout.tsd",
       "priority": "Critical"
     },
     {
       "id": "SCEN_RESILIENCE_PARTIAL_FILL",
-      "file": "Resilience/test_partial_fill.tsdl",
+      "file": "Resilience/test_partial_fill.tsd",
       "priority": "Medium"
     },
     {
       "id": "SCEN_RESILIENCE_RECONNECT_RESUME",
-      "file": "Resilience/test_reconnect_resume.tsdl",
+      "file": "Resilience/test_reconnect_resume.tsd",
       "priority": "High"
     },
     {
       "id": "SCEN_RESILIENCE_SL_TP_OVERLAP",
-      "file": "Resilience/test_sl_tp_overlap_guard.tsdl",
+      "file": "Resilience/test_sl_tp_overlap_guard.tsd",
       "priority": "High"
     },
     {
       "id": "SCEN_RESILIENCE_STALE_SESSION_CLEANUP",
-      "file": "Resilience/test_stale_session_cleanup.tsdl",
+      "file": "Resilience/test_stale_session_cleanup.tsd",
       "priority": "High"
     },
     {
       "id": "SCEN_RESILIENCE_ZOMBIE_RECOVERY",
-      "file": "Resilience/test_zombie_recovery.tsdl",
+      "file": "Resilience/test_zombie_recovery.tsd",
       "priority": "Critical"
     },
     {
       "id": "SCEN_RESILIENCE_BROKER_REJECT",
-      "file": "Resilience/test_broker_reject_entry.tsdl",
+      "file": "Resilience/test_broker_reject_entry.tsd",
       "priority": "High"
     },
     {
       "id": "SCEN_RESILIENCE_DOUBLE_ENTRY",
-      "file": "Resilience/test_double_entry_race.tsdl",
+      "file": "Resilience/test_double_entry_race.tsd",
       "priority": "Medium"
     }
   ]

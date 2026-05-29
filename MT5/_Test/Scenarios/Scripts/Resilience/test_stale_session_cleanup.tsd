@@ -1,4 +1,4 @@
-# test_stale_session_cleanup.tsdl
+# test_stale_session_cleanup.tsd
 SCENARIO: SCEN_STALE_CLEANUP_01 : "Stale Orphan DB Record Garbage Collection"
 DEFINE: SYMBOL=GOLDF#, CNO=1008, SNO=01, GNO=01, DIR=1, TYPE=0
 

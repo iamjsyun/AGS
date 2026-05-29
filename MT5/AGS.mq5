@@ -36,6 +36,15 @@ int OnInit() {
     //--- [v10.4] Testing Mode: Timer-only execution (100ms / 0.1s)
     EventSetMillisecondTimer(InpTimerInterval);
     
+    //--- [v2.2] Pre-Flight Environment Audit
+    CXIntegrityGuard envGuard;
+    if(!envGuard.AuditEnvironment(InpDatabaseName)) {
+        Print("================================================");
+        Print("[BOOTSTRAP-FATAL] Environmental Audit Failed!");
+        Print(envGuard.GetDetailedReport());
+        Print("================================================");
+        return INIT_FAILED;
+    }
  
     // 1. Configuration 객체 생성 (v10.27)
     g_config = new CXConfig(InpTargetMagics, InpTimerInterval, InpRemoteAddr, InpDatabaseName, InpUseCommonPath);

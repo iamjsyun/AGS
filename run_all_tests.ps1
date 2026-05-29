@@ -2,10 +2,34 @@
 # Usage: powershell -File ./run_all_tests.ps1
 
 $TerminalPath = "D:\Program Files\XM Global MT5\terminal64.exe"
-$CommonPath = "C:\Users\hijsyun\AppData\Roaming\MetaQuotes\Terminal\Common\Files\ATSE"
-$WorkspaceScripts = "d:\Projects\AGS\MT5\_CXTradeTest\Scenarios\Scripts"
-$ManifestPath = "d:\Projects\AGS\MT5\_CXTradeTest\Scenarios\scenario_manifest.json"
-$ReportPath = "d:\Projects\AGS\_log\test_results_summary.json"
+$CommonPath = "C:\Users\hijsyun\AppData\Roaming\MetaQuotes\Terminal\Common\Files\AGS"
+$WorkspaceScripts = "d:\Projects\AGS\MT5\_Test\Scenarios\Scripts"
+$ManifestPath = "d:\Projects\AGS\MT5\_Test\Scenarios\scenario_manifest.json"
+$ReportPath = "d:\Projects\AGS\_doc\result\test_results_summary.json"
+
+function Kill-Terminal {
+    Write-Host "Ensuring terminal64 is terminated..." -ForegroundColor Gray
+    Get-Process -Name "terminal64" -ErrorAction SilentlyContinue | Stop-Process -Force
+    # 포트, 메모리, 파일 락 해제를 위한 충분한 안정화 대기 시간 (3초)
+    Start-Sleep -Seconds 3
+}
+
+function Clear-ResultFile {
+    param([string]$path)
+    if (Test-Path -Path $path) {
+        Remove-Item -Path $path -Force -ErrorAction SilentlyContinue
+        # 파일 시스템 삭제 반영을 강하게 보장 (최대 3초)
+        $limit = 30
+        while ((Test-Path -Path $path) -and ($limit -gt 0)) {
+            Start-Sleep -Milliseconds 100
+            Remove-Item -Path $path -Force -ErrorAction SilentlyContinue
+            $limit--
+        }
+    }
+}
+
+# 0. Clean up existing terminal instances before run
+Kill-Terminal
 
 Write-Host "==================================================" -ForegroundColor Cyan
 Write-Host "AGS Batch E2E Scenario Tester (run_all_tests.ps1)" -ForegroundColor Cyan
@@ -17,9 +41,9 @@ New-Item -ItemType Directory -Path "$CommonPath\Core" -Force | Out-Null
 New-Item -ItemType Directory -Path "$CommonPath\Trade" -Force | Out-Null
 New-Item -ItemType Directory -Path "$CommonPath\Resilience" -Force | Out-Null
 
-Copy-Item -Path "$WorkspaceScripts\Core\*.tsdl" -Destination "$CommonPath\Core\" -Force -ErrorAction SilentlyContinue
-Copy-Item -Path "$WorkspaceScripts\Trade\*.tsdl" -Destination "$CommonPath\Trade\" -Force -ErrorAction SilentlyContinue
-Copy-Item -Path "$WorkspaceScripts\Resilience\*.tsdl" -Destination "$CommonPath\Resilience\" -Force -ErrorAction SilentlyContinue
+Copy-Item -Path "$WorkspaceScripts\Core\*.tsd" -Destination "$CommonPath\Core\" -Force -ErrorAction SilentlyContinue
+Copy-Item -Path "$WorkspaceScripts\Trade\*.tsd" -Destination "$CommonPath\Trade\" -Force -ErrorAction SilentlyContinue
+Copy-Item -Path "$WorkspaceScripts\Resilience\*.tsd" -Destination "$CommonPath\Resilience\" -Force -ErrorAction SilentlyContinue
 Write-Host "TSDL script sync complete." -ForegroundColor Green
 
 # 1.5. 유닛 테스트 실행 (AGSTestRunner.mq5)
@@ -28,15 +52,28 @@ Write-Host "Running Unit Test Suite (AGSTestRunner.mq5)..." -ForegroundColor Cya
 
 # 기존 결과 파일 제거
 $unitResultPath = "$CommonPath\scenario_result.txt"
-if (Test-Path -Path $unitResultPath) { Remove-Item -Path $unitResultPath -Force }
+Clear-ResultFile -path $unitResultPath
 
 # AGSTestRunner 가동을 위한 지시 파일 (AGSTestRunner는 고정되어 있으므로 target 불필요하나, 
 # 만약 CXScenarioRunner.mq5가 이 지시를 따른다면 'UNIT_TEST' 지시를 내림)
 "UNIT_TEST" | Out-File -FilePath "$CommonPath\scenario_target.txt" -Encoding ascii -NoNewline
 
-$unitProcess = Start-Process -FilePath $TerminalPath -PassThru -NoNewWindow
-Start-Sleep -Seconds 10 # 유닛 테스트는 내부적으로 Sleeps가 있을 수 있으므로 넉넉히 대기
-$unitProcess | Stop-Process -Force -ErrorAction SilentlyContinue
+Write-Host "Launching unit test runner..." -ForegroundColor Gray
+$unitProcess = Start-Process -FilePath $TerminalPath -ArgumentList "/config:d:\Projects\AGS\unit_startup.ini" -PassThru -NoNewWindow
+if ($unitProcess -ne $null) {
+    Write-Host "Unit test process started. PID: $($unitProcess.Id)" -ForegroundColor Gray
+} else {
+    Write-Host "ERROR: Failed to launch unit test process!" -ForegroundColor Red
+}
+
+# 유닛 테스트 결과 파일이 생성될 때까지 폴링 대기 (최대 40초, MT5 시작~EA 완료 실측 ~22초)
+$maxUnitWait = 40
+$unitWaited = 0
+while (!(Test-Path -Path $unitResultPath) -and ($unitWaited -lt $maxUnitWait)) {
+    Start-Sleep -Seconds 1
+    $unitWaited++
+}
+Kill-Terminal
 
 if (Test-Path -Path $unitResultPath) {
     $unitLines = Get-Content -Path $unitResultPath
@@ -62,7 +99,7 @@ $failedCount = 0
 foreach ($scen in $manifest.scenarios) {
     $totalCount++
     $scenId = $scen.id
-    $scenRelFile = "ATSE\" + $scen.file.Replace("/", "\")
+    $scenRelFile = "AGS\" + $scen.file.Replace("/", "\")
     
     Write-Host "[$totalCount/$($manifest.scenarios.Count)] Running Scenario: $scenId ($scenRelFile)" -ForegroundColor Cyan
     
@@ -70,20 +107,30 @@ foreach ($scen in $manifest.scenarios) {
     $targetFilePath = "$CommonPath\scenario_target.txt"
     $resultFilePath = "$CommonPath\scenario_result.txt"
     if (Test-Path -Path $targetFilePath) { Remove-Item -Path $targetFilePath -Force }
-    if (Test-Path -Path $resultFilePath) { Remove-Item -Path $resultFilePath -Force }
+    Clear-ResultFile -path $resultFilePath
     
     # 타겟 지정 쓰기
     $scenRelFile | Out-File -FilePath $targetFilePath -Encoding ascii -NoNewline
     
     # 단말 가동
-    $process = Start-Process -FilePath $TerminalPath -PassThru -NoNewWindow
+    Write-Host " Relaunching terminal with runner_startup.ini..." -ForegroundColor Gray
+    $process = Start-Process -FilePath $TerminalPath -ArgumentList "/config:d:\Projects\AGS\runner_startup.ini" -PassThru -NoNewWindow
+    if ($process -ne $null) {
+        Write-Host " Terminal process started successfully. PID: $($process.Id)" -ForegroundColor Gray
+    } else {
+        Write-Host " ERROR: Start-Process returned null for scenario!" -ForegroundColor Red
+    }
     
-    # 시뮬레이션 연산 완료 대기 (6초 대기)
-    Start-Sleep -Seconds 6
+    # 결과 파일이 생성될 때까지 폴링 대기 (최대 40초, MT5 시작~EA 완료 실측 ~22초)
+    $maxWait = 40
+    $waited = 0
+    while (!(Test-Path -Path $resultFilePath) -and ($waited -lt $maxWait)) {
+        Start-Sleep -Seconds 1
+        $waited++
+    }
     
     # 단말 강제 종료
-    $process | Stop-Process -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Seconds 1 # 단말 종료 처리 안정화 대기
+    Kill-Terminal
     
     # 결과 파일 수집 (최대 3초 대기하며 폴링)
     $scenResult = [PSCustomObject]@{

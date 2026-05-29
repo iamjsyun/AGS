@@ -54,7 +54,7 @@
 
 TSDL 시나리오는 파서(`CXTsdlParser`)를 통해 틱(Tick) 단위로 외부 주입 및 검증 파라미터를 읽어들여 시스템 파이프라인 전체를 테스트합니다.
 
-### 2.1 시나리오: `test_duplicate_sid.tsdl` (중복 SID 방어 검증)
+### 2.1 시나리오: `test_duplicate_sid.tsd` (중복 SID 방어 검증)
 
 **시나리오 소스 데이터 (TSDL)**:
 ```text
@@ -77,7 +77,7 @@ PRICER: GOLDF# > TREND : start=2350.00
   - **판독 (Expect)**: `? EXPECT: session : state=ORD_READY` -> `[PASS]` 
   - **최종 결과**: 세션이 오염되거나 브로커에 이중 주문이 송신되지 않고 기존 세션 무결성 유지 확인.
 
-### 2.2 시나리오: `test_manual_exit.tsdl` (수동 청산 패스트 트랙)
+### 2.2 시나리오: `test_manual_exit.tsd` (수동 청산 패스트 트랙)
 
 **실행 및 판독 흐름 (Trace)**:
 - **Tick 1 (주입)**: Signal 주입 완료. `[PASS]`

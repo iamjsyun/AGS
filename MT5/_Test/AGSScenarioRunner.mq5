@@ -1,7 +1,7 @@
 //+------------------------------------------------------------------+
-//|                                           CXScenarioRunner.mq5 |
+//|                                           AGSScenarioRunner.mq5 |
 //|                                  Copyright 2026, Gemini CLI      |
-//| [v2.0] TSDL-based Deterministic E2E Test Runner for ATSE          |
+// [v2.0] TSDL-based Deterministic E2E Test Runner for AGS          |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2026, Gemini CLI"
 #property link      "https://github.com/google-gemini/gemini-cli"
@@ -21,10 +21,11 @@
 #include "..\Core\DB\CXDatabase.mqh"
 #include "..\Core\DB\CXSignalRepository.mqh"
 #include "..\Core\Interfaces\ICXAssetManager.mqh"
+#include "..\Core\Guard\CXIntegrityGuard.mqh"
 
 //--- [Inputs]
-input string InpScenarioFile  = "ATSE\\test_advanced_exit.tsdl"; // TSDL Filename (MQL5/Files)
-input string InpDatabaseName  = "ATS_TEST.db";                 // Target Database (Isolated)
+input string InpScenarioFile  = "AGS\\test_advanced_exit.tsd"; // TSDL Filename (MQL5/Files)
+input string InpDatabaseName  = "AGS.db";                 // Target Database (Isolated)
 input bool   InpUseCommonPath = true;                          // DB Path
 input int    InpMaxTicks      = 100;                           // Safety Break
 
@@ -37,13 +38,14 @@ CXTestServiceFactory* g_factory = NULL;
 CXAppService*         g_app = NULL;          
 CXConfig*             g_config = NULL;       
 ICXContext*           g_ctx = NULL;          
-CXSignalRepository*   g_repo = NULL;         
+IRepository*          g_repo = NULL;         
 
 CArrayObj*            g_traces = NULL;       
 int                   g_currentTick = 0;
 int                   g_maxTick = 0;
 int                   g_passed = 0;
 int                   g_failed = 0;
+string                g_lastYymmddhh = "";  // [v2.3] INJECT 시 사용된 yymmddhh 추적
 
 //--- Helper functions for state names mapping
 int SessionStateNameToEnum(string name) {
@@ -97,8 +99,8 @@ int OnInit() {
     string scenFile = InpScenarioFile;
     
     // 임시 타겟 파일 존재 시 읽어서 우선 적용 (배치 자동화용)
-    if(FileIsExist("ATSE\\scenario_target.txt", FILE_COMMON)) {
-        int targetHandle = FileOpen("ATSE\\scenario_target.txt", FILE_READ|FILE_TXT|FILE_ANSI|FILE_COMMON);
+    if(FileIsExist("AGS\\scenario_target.txt", FILE_COMMON)) {
+        int targetHandle = FileOpen("AGS\\scenario_target.txt", FILE_READ|FILE_TXT|FILE_ANSI|FILE_COMMON);
         if(targetHandle != INVALID_HANDLE) {
             string targetPath = FileReadString(targetHandle);
             StringReplace(targetPath, "\r", "");
@@ -112,6 +114,16 @@ int OnInit() {
         }
     }
 
+    //--- [v2.2] Pre-Flight Environment Audit for Scenario TSDL file
+    CXIntegrityGuard envGuard;
+    if(!envGuard.AuditEnvironment(scenFile)) {
+        Print("================================================");
+        Print("[RUNNER-FATAL] Environmental Audit Failed!");
+        Print(envGuard.GetDetailedReport());
+        Print("================================================");
+        return INIT_FAILED;
+    }
+
     g_scenario = CXTsdlParser::Parse(scenFile);
     if(IS_INVALID(g_scenario)) {
         PrintFormat("[RUNNER] ERROR: Scenario file '%s' not found.", scenFile);
@@ -119,13 +131,6 @@ int OnInit() {
     }
 
     g_traces = new CArrayObj();
-    CXDatabase* db = new CXDatabase();
-    if(db.Open(InpDatabaseName, InpUseCommonPath)) {
-        g_repo = new CXSignalRepository(db);
-        // Clean up from previous run if any
-        g_repo.DeleteSignalByCnoSno((int)StringToInteger(g_scenario.GetDefine("CNO")), (int)StringToInteger(g_scenario.GetDefine("SNO")), g_scenario.GetDefine("SYMBOL"));
-    }
-
     g_pricer = new CXVirtualPricer("GOLDF#", 0.01);
     g_pricer.InitModel(g_scenario.m_pricerModel, 2350.00, 2);
 
@@ -139,6 +144,13 @@ int OnInit() {
     if(!g_app.Initialize(g_config, g_factory)) return INIT_FAILED;
 
     g_ctx = g_app.GetContext();
+    g_repo = CX_GET_OBJ(g_ctx, "repo", IRepository);
+    
+    // Clean up from previous run if any
+    if(IS_VALID(g_repo)) {
+        g_repo.DeleteBySid(g_scenario.GetDefine("SID"));
+    }
+
     g_maxTick = g_scenario.GetMaxTick();
     if(g_maxTick <= 0) g_maxTick = InpMaxTicks;
     
@@ -158,19 +170,23 @@ void OnDeinit(const int reason) {
     Print("==================================================");
 
     // [v2.0 Batch Automation] 결과를 결과 파일에 기록하여 파워쉘이 집계할 수 있도록 지원 (FILE_COMMON)
-    int resHandle = FileOpen("ATSE\\scenario_result.txt", FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_COMMON);
+    int resHandle = FileOpen("AGS\\scenario_result.txt", FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_COMMON);
     if(resHandle != INVALID_HANDLE) {
-        FileWriteString(resHandle, StringFormat("id=%s\r\n", g_scenario.m_id));
-        FileWriteString(resHandle, StringFormat("ticks=%d\r\n", g_currentTick));
-        FileWriteString(resHandle, StringFormat("passed=%d\r\n", g_passed));
-        FileWriteString(resHandle, StringFormat("failed=%d\r\n", g_failed));
-        FileWriteString(resHandle, StringFormat("status=%s\r\n", (g_failed == 0 && g_passed > 0) ? "PASSED" : "FAILED"));
+        if(g_scenario != NULL) {
+            FileWriteString(resHandle, StringFormat("id=%s\r\n", g_scenario.m_id));
+            FileWriteString(resHandle, StringFormat("ticks=%d\r\n", g_currentTick));
+            FileWriteString(resHandle, StringFormat("passed=%d\r\n", g_passed));
+            FileWriteString(resHandle, StringFormat("failed=%d\r\n", g_failed));
+            FileWriteString(resHandle, StringFormat("status=%s\r\n", (g_failed == 0 && g_passed > 0) ? "PASSED" : "FAILED"));
+        } else {
+            FileWriteString(resHandle, "status=FAILED\r\nerror=Scenario not loaded\r\n");
+        }
         FileClose(resHandle);
     }
 
-    SAFE_DELETE(g_repo);
+    // [v2.2 Fix] Ownership & Double Free Protection
+    // g_app owns config, repo, db, priceManager(mockPriceMgr), terminalPlatform(mockTerminal)
     SAFE_DELETE(g_app);
-    SAFE_DELETE(g_config);
     SAFE_DELETE(g_factory);
     SAFE_DELETE(g_pricer);
     SAFE_DELETE(g_scenario);
@@ -204,6 +220,8 @@ void HandleAction(CXTsdlAction* action) {
             
             // [v2.1] Auto-Assemble SID from components if missing
             string sid = action.GetParam("sid");
+            string yymmddhh_action = action.GetParam("yymmddhh");
+            if(yymmddhh_action != "") g_lastYymmddhh = yymmddhh_action;  // [v2.3] 추적
             if(sid == "" && action.GetParamInt("cno") > 0) {
                 sid = StringFormat("%04d-%s-%02d-%02d-%d-%d", 
                                    action.GetParamInt("cno"), action.GetParam("yymmddhh"),
@@ -254,15 +272,25 @@ void VerifyExpectation(CXTsdlExpect* expect, int tick) {
         if(sid == "") sid = g_scenario.GetDefine("SID");
         
         // [v2.1] Auto-Assemble SID from components if still missing
-        if(sid == "" && StringToInteger(g_scenario.GetDefine("CNO")) > 0) {
-            // YYMMDDHH may be in DEFINE or we use the one from the last INJECT (but here we just use what's in DEFINE if available)
-            string yymmddhh = g_scenario.GetDefine("YYMMDDHH");
-            if(yymmddhh == "") yymmddhh = "26052804"; // Fallback for duplicate_sid test
-            
-            sid = StringFormat("%04d-%s-%02d-%02d-%d-%d", 
-                               (int)StringToInteger(g_scenario.GetDefine("CNO")), yymmddhh,
-                               (int)StringToInteger(g_scenario.GetDefine("SNO")), (int)StringToInteger(g_scenario.GetDefine("GNO")),
-                               (int)StringToInteger(g_scenario.GetDefine("DIR")), (int)StringToInteger(g_scenario.GetDefine("TYPE")));
+        if(sid == "") {
+            string cnoStr = g_scenario.GetDefine("CNO");
+            long cnoVal = StringToInteger(cnoStr);
+            PrintFormat("[SID-DEBUG] CNO='%s'(%d), g_lastYymmddhh='%s', SNO='%s', GNO='%s', DIR='%s', TYPE='%s'",
+                cnoStr, (int)cnoVal,
+                g_lastYymmddhh,
+                g_scenario.GetDefine("SNO"), g_scenario.GetDefine("GNO"),
+                g_scenario.GetDefine("DIR"), g_scenario.GetDefine("TYPE"));
+            if(cnoVal > 0) {
+                // [v2.3] g_lastYymmddhh 우선, 없으면 DEFINE, 없으면 "26052804" fallback
+                string yymmddhh = g_lastYymmddhh;
+                if(yymmddhh == "") yymmddhh = g_scenario.GetDefine("YYMMDDHH");
+                if(yymmddhh == "") yymmddhh = "26052804";
+                
+                sid = StringFormat("%04d-%s-%02d-%02d-%d-%d", 
+                                   (int)cnoVal, yymmddhh,
+                                   (int)StringToInteger(g_scenario.GetDefine("SNO")), (int)StringToInteger(g_scenario.GetDefine("GNO")),
+                                   (int)StringToInteger(g_scenario.GetDefine("DIR")), (int)StringToInteger(g_scenario.GetDefine("TYPE")));
+            }
         }
         
         ICXSignal* sig = (IS_VALID(g_repo)) ? g_repo.GetSignalBySid(sid) : NULL;

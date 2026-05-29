@@ -15,16 +15,23 @@ public:
         bool allPassed = true;
         
         CXContext ctx;
-        MockAssetManager assetMgr;
-        MockRepository repo;
-        ctx.Register("asset_mgr", GetPointer(assetMgr));
-        ctx.Register("repo", GetPointer(repo));
+        MockAssetManager* assetMgr = new MockAssetManager();
+        MockRepository* repo = new MockRepository();
+        ctx.Register("asset_mgr", assetMgr);
+        ctx.Register("repo", repo);
         
         CXParam xp;
-        CXSignal sig;
-        xp.SetSignal(GetPointer(sig));
+        CXSignal* sig = new CXSignal();
+        xp.SetSignal(sig);
         
         CXTaskPending_V_Sync task;
+        if(!task.Bind(GetPointer(ctx))) {
+            Print("  [FAIL] Failed to bind context.");
+            delete assetMgr;
+            delete repo;
+            delete sig;
+            return false;
+        }
         
         // Test Case 1: Exit Intent detected (xa_exit == XA_ACTIVE). Should return SESSION_LIQUIDATING (20).
         sig.Reset();
@@ -72,6 +79,10 @@ public:
                         XE_EXECUTED, SESSION_ACTIVE, sig.GetStatus(), result);
             allPassed = false;
         }
+        
+        delete assetMgr;
+        delete repo;
+        delete sig;
         
         return allPassed;
     }

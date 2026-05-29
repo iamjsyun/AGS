@@ -51,9 +51,9 @@ int OnInit() {
     Print("==================================================");
 
     // [v1.2 CI Integration] 결과 파일 출력
-    int resHandle = FileOpen("ATSE\\scenario_result.txt", FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_COMMON);
+    int resHandle = FileOpen("AGS\\scenario_result.txt", FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_COMMON);
     if(resHandle != INVALID_HANDLE) {
-        FileWriteString(resHandle, StringFormat("id=UNIT_TEST_SUITE\r\n"));
+        FileWriteString(resHandle, "id=UNIT_TEST_SUITE\r\n");
         FileWriteString(resHandle, StringFormat("passed=%d\r\n", passed));
         FileWriteString(resHandle, StringFormat("failed=%d\r\n", failed));
         FileWriteString(resHandle, StringFormat("status=%s\r\n", (failed == 0) ? "PASSED" : "FAILED"));

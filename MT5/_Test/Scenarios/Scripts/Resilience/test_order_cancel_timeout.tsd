@@ -1,4 +1,4 @@
-# test_order_cancel_timeout.tsdl
+# test_order_cancel_timeout.tsd
 SCENARIO: SCEN_ORDER_TIMEOUT_01 : "Order Cancellation Timeout & Recovery"
 DEFINE: SYMBOL=GOLDF#, CNO=1004, SNO=01, GNO=01, DIR=1, TYPE=0
 

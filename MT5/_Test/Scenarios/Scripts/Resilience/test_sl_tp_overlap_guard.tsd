@@ -1,4 +1,4 @@
-# test_sl_tp_overlap_guard.tsdl
+# test_sl_tp_overlap_guard.tsd
 SCENARIO: SCEN_SL_TP_OVERLAP_01 : "SL/TP Price Configuration Overlap Protection"
 DEFINE: SYMBOL=GOLDF#, CNO=1009, SNO=01, GNO=01, DIR=1, TYPE=0
 

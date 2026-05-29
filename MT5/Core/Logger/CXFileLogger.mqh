@@ -54,13 +54,13 @@ private:
     bool OpenByTime(MqlDateTime &dt, bool truncate) {
         Close();
 
-        if(!FolderCreate("ATSE", FILE_COMMON)) {
+        if(!FolderCreate("AGS", FILE_COMMON)) {
             int err = GetLastError();
-            if(err != 0 && err != 5019) PrintFormat("[LOG-ERR] FolderCreate ATSE failed. Code:%d", err);
+            if(err != 0 && err != 5019) PrintFormat("[LOG-ERR] FolderCreate AGS failed. Code:%d", err);
         }
 
         string timestamp = StringFormat("%02d%02d%02d-%02d0000", dt.year % 100, dt.mon, dt.day, dt.hour);
-        m_filename = StringFormat("ATSE\\%s-%s.log", m_sid, timestamp);
+        m_filename = StringFormat("AGS\\%s-%s.log", m_sid, timestamp);
         
         int sharedFlags = FILE_SHARE_READ|FILE_SHARE_WRITE;
         int flags = FILE_TXT|sharedFlags|FILE_UNICODE|FILE_COMMON;
@@ -85,7 +85,7 @@ private:
 
         if(m_handle != INVALID_HANDLE) return true;
         
-        PrintFormat("[LOG-CRITICAL] Failed to create log file! Path: ATSE\\%s, SID: %s, Error: %d", 
+        PrintFormat("[LOG-CRITICAL] Failed to create log file! Path: AGS\\%s, SID: %s, Error: %d", 
                     m_filename, m_sid, GetLastError());
         return false;
     }

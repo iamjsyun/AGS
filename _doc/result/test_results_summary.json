@@ -1,0 +1,207 @@
+﻿{
+    "timestamp":  "2026-05-29 19:46:39",
+    "total_run":  22,
+    "passed":  4,
+    "failed":  18,
+    "success_rate":  "18.18%",
+    "results":  [
+                    {
+                        "id":  "SCEN_CORE_DUP_SID",
+                        "file":  "Core/test_duplicate_sid.tsd",
+                        "status":  "PASSED",
+                        "ticks":  3,
+                        "passed":  2,
+                        "failed":  0,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_ADV_EXIT",
+                        "file":  "Trade/test_advanced_exit.tsd",
+                        "status":  "FAILED",
+                        "ticks":  32,
+                        "passed":  6,
+                        "failed":  5,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_BROKER_SL_TP",
+                        "file":  "Trade/test_broker_sl_tp.tsd",
+                        "status":  "FAILED",
+                        "ticks":  4,
+                        "passed":  1,
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_GOLDEN_PATH",
+                        "file":  "Trade/test_golden_path.tsd",
+                        "status":  "FAILED",
+                        "ticks":  7,
+                        "passed":  0,
+                        "failed":  6,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_MANUAL_EXIT",
+                        "file":  "Trade/test_manual_exit.tsd",
+                        "status":  "FAILED",
+                        "ticks":  4,
+                        "passed":  1,
+                        "failed":  2,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_PENDING_EXIT",
+                        "file":  "Trade/test_pending_exit.tsd",
+                        "status":  "FAILED",
+                        "ticks":  3,
+                        "passed":  1,
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_POSITION_EXIT",
+                        "file":  "Trade/test_position_exit.tsd",
+                        "status":  "FAILED",
+                        "ticks":  5,
+                        "passed":  2,
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_TRAILING_ENTRY_EXIT",
+                        "file":  "Trade/test_trailing_entry_exit.tsd",
+                        "status":  "FAILED",
+                        "ticks":  4,
+                        "passed":  1,
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_TRAILING_ENTRY_LIMIT",
+                        "file":  "Trade/test_trailing_entry_limit.tsd",
+                        "status":  "FAILED",
+                        "ticks":  4,
+                        "passed":  1,
+                        "failed":  2,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_TRAILING_ENTRY_REBOUND",
+                        "file":  "Trade/test_trailing_entry_rebound.tsd",
+                        "status":  "FAILED",
+                        "ticks":  5,
+                        "passed":  2,
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_TRAILING_STOP_EXIT",
+                        "file":  "Trade/test_trailing_stop_exit.tsd",
+                        "status":  "PASSED",
+                        "ticks":  5,
+                        "passed":  2,
+                        "failed":  0,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_VOID_EXIT",
+                        "file":  "Trade/test_void_exit.tsd",
+                        "status":  "FAILED",
+                        "ticks":  3,
+                        "passed":  1,
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_TRADE_SLIPPAGE_CONTROL",
+                        "file":  "Trade/test_slippage_control.tsd",
+                        "status":  "PASSED",
+                        "ticks":  4,
+                        "passed":  3,
+                        "failed":  0,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_RESILIENCE_MARGIN_CALL",
+                        "file":  "Resilience/test_margin_call_guard.tsd",
+                        "status":  "FAILED",
+                        "ticks":  2,
+                        "passed":  0,
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_RESILIENCE_ORDER_CANCEL_TIMEOUT",
+                        "file":  "Resilience/test_order_cancel_timeout.tsd",
+                        "status":  "FAILED",
+                        "ticks":  31,
+                        "passed":  1,
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_RESILIENCE_PARTIAL_FILL",
+                        "file":  "Resilience/test_partial_fill.tsd",
+                        "status":  "FAILED",
+                        "ticks":  4,
+                        "passed":  0,
+                        "failed":  2,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_RESILIENCE_RECONNECT_RESUME",
+                        "file":  "Resilience/test_reconnect_resume.tsd",
+                        "status":  "FAILED",
+                        "ticks":  8,
+                        "passed":  0,
+                        "failed":  4,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_RESILIENCE_SL_TP_OVERLAP",
+                        "file":  "Resilience/test_sl_tp_overlap_guard.tsd",
+                        "status":  "FAILED",
+                        "ticks":  2,
+                        "passed":  0,
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_RESILIENCE_STALE_SESSION_CLEANUP",
+                        "file":  "Resilience/test_stale_session_cleanup.tsd",
+                        "status":  "FAILED",
+                        "ticks":  31,
+                        "passed":  0,
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_RESILIENCE_ZOMBIE_RECOVERY",
+                        "file":  "Resilience/test_zombie_recovery.tsd",
+                        "status":  "FAILED",
+                        "ticks":  0,
+                        "passed":  0,
+                        "failed":  0,
+                        "details":  "No result file generated (Terminal execution timeout)"
+                    },
+                    {
+                        "id":  "SCEN_RESILIENCE_BROKER_REJECT",
+                        "file":  "Resilience/test_broker_reject_entry.tsd",
+                        "status":  "FAILED",
+                        "ticks":  4,
+                        "passed":  2,
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
+                    },
+                    {
+                        "id":  "SCEN_RESILIENCE_DOUBLE_ENTRY",
+                        "file":  "Resilience/test_double_entry_race.tsd",
+                        "status":  "PASSED",
+                        "ticks":  3,
+                        "passed":  4,
+                        "failed":  0,
+                        "details":  "E2E ticks execution verification completed."
+                    }
+                ]
+}

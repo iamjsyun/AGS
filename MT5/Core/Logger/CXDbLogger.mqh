@@ -58,7 +58,7 @@ public:
         StringReplace(cleanMsg, "'", "''");
 
         string sql = StringFormat(
-            "INSERT INTO atse_log (sid, level, msg) VALUES ('System', '%s', '%s')",
+            "INSERT INTO ags_log (sid, level, msg) VALUES ('System', '%s', '%s')",
             lvlStr, cleanMsg
         );
         m_db.Execute(sql);
@@ -137,7 +137,7 @@ public:
         string lvlStr = EnumToString(level);
 
         string sql = StringFormat(
-            "INSERT INTO atse_log (sid, level, msg) VALUES ('%s', '%s', '%s')",
+            "INSERT INTO ags_log (sid, level, msg) VALUES ('%s', '%s', '%s')",
             sid, lvlStr, payload
         );
         m_db.Execute(sql);

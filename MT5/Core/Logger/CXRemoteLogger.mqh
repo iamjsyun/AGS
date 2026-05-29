@@ -46,7 +46,7 @@ virtual void Log(ENUM_LOG_LEVEL level, string msg) override {
     string timestamp = TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS);
 
     // Log4View log4net XML Format Layout
-    string xml = "<log4net:event logger=\"ATSE\" ";
+    string xml = "<log4net:event logger=\"AGS\" ";
     xml += "timestamp=\"" + timestamp + "\" ";
     xml += "level=\"" + nlogLevel + "\" ";
     xml += "thread=\"1\">\r\n";
