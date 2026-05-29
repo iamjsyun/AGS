@@ -52,3 +52,9 @@ build_log.txt
 
 _doc/gemini/tmp/
 _doc/gemini/history/
+
+# Google Drive sync temporary files
+.tmp.drivedownload/
+.tmp.drivedownload*
+.tmp.driveupload/
+.tmp.driveupload*
