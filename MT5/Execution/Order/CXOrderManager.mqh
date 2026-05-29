@@ -398,10 +398,12 @@ public:
                 ICXSignal* sig = existing.GetSignal();
                 if(IS_VALID(sig) && sig.GetTicket() != ticket) {
                     sig.SetTicket(ticket);
-                    // No log here to prevent flooding
                 }
             }
         }
+
+        // [v11.4 Mandate] Dangling Pointer Protection
+        if(IS_VALID(xp)) xp.SetSignal(NULL);
     }
 };
 

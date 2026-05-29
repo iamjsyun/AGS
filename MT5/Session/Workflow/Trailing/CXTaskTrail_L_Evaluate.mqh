@@ -33,7 +33,7 @@ public:
         if(IS_INVALID(pExt)) return TASK_CONTINUE;
 
         double extreme = pExt.GetDouble();
-        int step = (m_mode == TRAIL_MODE_ENTRY) ? sig.GetTEStep() : sig.GetTSStep();
+        int step = (m_mode == TRAIL_MODE_ENTRY) ? (int)sig.GetTEStep() : (int)sig.GetTSStep();
         if(step <= 0) return TASK_CONTINUE;
 
         ICXPriceManager* priceMgr = CX_GET_OBJ(ctx, "price_mgr", ICXPriceManager);

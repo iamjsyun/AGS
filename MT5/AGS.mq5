@@ -29,18 +29,18 @@ input ENUM_LOG_LEVEL InpLog_Level       = LOG_LVL_TRACE;        // Log Level
 //--- [Group: Signal Watcher Log]
 input bool           InpWatcher_UseFile   = true;              // Watcher: File Log Enabled
 input bool           InpWatcher_UseRemote = true;              // Watcher: Remote Log Enabled
-input bool           InpWatcher_InitStart = false;             // Watcher: Clear Log on Start (Prohibited by Mandate)
+input bool           InpWatcher_InitStart = true;              // Watcher: Clear Log on Start (Mandatory by v11.5)
 
 //--- [Group: System Infra Log]
 input bool           InpSystem_UseFile    = true;              // System: File Log Enabled
 input bool           InpSystem_UseRemote  = false;             // System: Remote Log Enabled
-input bool           InpSystem_InitStart  = false;             // System: Clear Log on Start (Prohibited by Mandate)
+input bool           InpSystem_InitStart  = true;              // System: Clear Log on Start (Mandatory by v11.5)
 
 //--- [Group: Trading Session Log]
 input bool           InpSession_UseFile   = true;              // Session: File Log Enabled
 input bool           InpSession_UseRemote = true;              // Session: Remote Log Enabled
 input bool           InpSession_UseUI     = true;              // Session: UI Log Enabled
-input bool           InpSession_InitStart = false;             // Session: Clear Log on Start (Prohibited by Mandate)
+input bool           InpSession_InitStart = true;              // Session: Clear Log on Start (Mandatory by v11.5)
 
 //--- Global Instance
 CXAppService* g_app = NULL;

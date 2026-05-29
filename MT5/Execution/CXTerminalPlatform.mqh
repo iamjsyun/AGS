@@ -7,6 +7,7 @@
 #include "..\Platform\Core\Macros\CXMacros.mqh"
 #include "..\Platform\Shared\Logging\CXAuditFormatter.mqh"
 #include <Trade\Trade.mqh>
+#include <Arrays\ArrayLong.mqh>
 
 /**
  * @class CXTerminalPlatform
@@ -281,7 +282,7 @@ public:
 
         if(HistorySelect(0, TimeCurrent())) {
             int total = HistoryDealsTotal();
-            for(int i = total - 1; i >= 0; i--) {
+            for(int i = 0; i < total; i++) {
                 ulong dealTicket = HistoryDealGetTicket(i);
                 if(HistoryDealGetInteger(dealTicket, DEAL_POSITION_ID) == ticket &&
                    HistoryDealGetInteger(dealTicket, DEAL_ENTRY) == DEAL_ENTRY_OUT) {
@@ -303,7 +304,7 @@ public:
             }
 
             int totalOrders = HistoryOrdersTotal();
-            for(int i = totalOrders - 1; i >= 0; i--) {
+            for(int i = 0; i < totalOrders; i++) {
                 ulong histTicket = HistoryOrderGetTicket(i);
                 if(histTicket == ticket) {
                     ENUM_ORDER_STATE state = (ENUM_ORDER_STATE)HistoryOrderGetInteger(histTicket, ORDER_STATE);
@@ -359,36 +360,52 @@ public:
         bool all_cleared = true;
         XP_LOG_WARN(xp, CXAuditFormatter::Build("EXIT-SWEEP-START", xp, "Starting Fallback Sweep for SID:" + sid));
         
-        //-- 포지션 스윕
-        for(int i = PositionsTotal() - 1; i >= 0; i--) {
+        // 1. Collect tickets to close/delete (Forward Loop)
+        CArrayLong posTickets;
+        int totalPos = PositionsTotal();
+        for(int i = 0; i < totalPos; i++) {
             ulong t = PositionGetTicket(i);
             if(PositionSelectByTicket(t)) {
                 if(PositionGetInteger(POSITION_MAGIC) == (long)magic && PositionGetString(POSITION_COMMENT) == sid) {
-                    XP_LOG_INFO(xp, CXAuditFormatter::Build("POS-CLOSE-SWEEP", xp, StringFormat("Sending Request [Ticket:%I64u]", t)));
-                    if(!PositionClose(xp, t)) {
-                        all_cleared = false;
-                        string err_msg = StringFormat("SWEEP FAILED for Ticket:%I64u", t);
-                        XP_LOG_ERROR(xp, CXAuditFormatter::Build("POS-CLOSE-FAIL", xp, err_msg));
-                        if(IS_VALID(xp)) xp.SetString("[POS-CLOSE-FAIL] " + err_msg);
-                    }
+                    posTickets.Add(t);
                 }
             }
         }
-        //-- 주문 스윕
-        for(int i = OrdersTotal() - 1; i >= 0; i--) {
+
+        CArrayLong ordTickets;
+        int totalOrd = OrdersTotal();
+        for(int i = 0; i < totalOrd; i++) {
             ulong t = OrderGetTicket(i);
             if(OrderSelect(t)) {
                 if(OrderGetInteger(ORDER_MAGIC) == (long)magic && OrderGetString(ORDER_COMMENT) == sid) {
-                    XP_LOG_INFO(xp, CXAuditFormatter::Build("ORDER-DELETE-SWEEP", xp, StringFormat("Sending Request [Ticket:%I64u]", t)));
-                    if(!OrderDelete(xp, t)) {
-                        all_cleared = false;
-                        string err_msg = StringFormat("SWEEP FAILED for Ticket:%I64u", t);
-                        XP_LOG_ERROR(xp, CXAuditFormatter::Build("ORDER-DELETE-FAIL", xp, err_msg));
-                        if(IS_VALID(xp)) xp.SetString("[ORDER-DELETE-FAIL] " + err_msg);
-                    }
+                    ordTickets.Add(t);
                 }
             }
         }
+
+        // 2. Execute sweeping (Forward Loop over fixed list)
+        for(int i = 0; i < posTickets.Total(); i++) {
+            ulong t = posTickets.At(i);
+            XP_LOG_INFO(xp, CXAuditFormatter::Build("POS-CLOSE-SWEEP", xp, StringFormat("Sending Request [Ticket:%I64u]", t)));
+            if(!PositionClose(xp, t)) {
+                all_cleared = false;
+                string err_msg = StringFormat("SWEEP FAILED for Ticket:%I64u", t);
+                XP_LOG_ERROR(xp, CXAuditFormatter::Build("POS-CLOSE-FAIL", xp, err_msg));
+                if(IS_VALID(xp)) xp.SetString("[POS-CLOSE-FAIL] " + err_msg);
+            }
+        }
+
+        for(int i = 0; i < ordTickets.Total(); i++) {
+            ulong t = ordTickets.At(i);
+            XP_LOG_INFO(xp, CXAuditFormatter::Build("ORDER-DELETE-SWEEP", xp, StringFormat("Sending Request [Ticket:%I64u]", t)));
+            if(!OrderDelete(xp, t)) {
+                all_cleared = false;
+                string err_msg = StringFormat("SWEEP FAILED for Ticket:%I64u", t);
+                XP_LOG_ERROR(xp, CXAuditFormatter::Build("ORDER-DELETE-FAIL", xp, err_msg));
+                if(IS_VALID(xp)) xp.SetString("[ORDER-DELETE-FAIL] " + err_msg);
+            }
+        }
+
         return all_cleared;
     }
 
@@ -396,30 +413,36 @@ public:
         bool all_cleared = true;
         XP_LOG_WARN(xp, StringFormat("[EXIT-SWEEP-MAGIC] Starting Massive Sweep for Magic:%I64u", magic));
         
-        //-- 포지션 스윕 (Magic 기준 전수 조사)
-        for(int i = PositionsTotal() - 1; i >= 0; i--) {
+        CArrayLong posTickets;
+        int totalPos = PositionsTotal();
+        for(int i = 0; i < totalPos; i++) {
             ulong t = PositionGetTicket(i);
             if(PositionSelectByTicket(t)) {
-                if(PositionGetInteger(POSITION_MAGIC) == (long)magic) {
-                    XP_LOG_INFO(xp, StringFormat("[POS-CLOSE-SWEEP] Sending Bulk Request [Ticket:%I64u, M:%I64u]", t, magic));
-                    if(!PositionClose(xp, t)) {
-                        all_cleared = false;
-                    }
-                }
+                if(PositionGetInteger(POSITION_MAGIC) == (long)magic) posTickets.Add(t);
             }
         }
-        //-- 주문 스윕 (Magic 기준 전수 조사)
-        for(int i = OrdersTotal() - 1; i >= 0; i--) {
+
+        CArrayLong ordTickets;
+        int totalOrd = OrdersTotal();
+        for(int i = 0; i < totalOrd; i++) {
             ulong t = OrderGetTicket(i);
             if(OrderSelect(t)) {
-                if(OrderGetInteger(ORDER_MAGIC) == (long)magic) {
-                    XP_LOG_INFO(xp, StringFormat("[ORDER-DELETE-SWEEP] Sending Bulk Request [Ticket:%I64u, M:%I64u]", t, magic));
-                    if(!OrderDelete(xp, t)) {
-                        all_cleared = false;
-                    }
-                }
+                if(OrderGetInteger(ORDER_MAGIC) == (long)magic) ordTickets.Add(t);
             }
         }
+
+        for(int i = 0; i < posTickets.Total(); i++) {
+            ulong t = posTickets.At(i);
+            XP_LOG_INFO(xp, StringFormat("[POS-CLOSE-SWEEP] Sending Bulk Request [Ticket:%I64u, M:%I64u]", t, magic));
+            if(!PositionClose(xp, t)) all_cleared = false;
+        }
+
+        for(int i = 0; i < ordTickets.Total(); i++) {
+            ulong t = ordTickets.At(i);
+            XP_LOG_INFO(xp, StringFormat("[ORDER-DELETE-SWEEP] Sending Bulk Request [Ticket:%I64u, M:%I64u]", t, magic));
+            if(!OrderDelete(xp, t)) all_cleared = false;
+        }
+
         return all_cleared;
     }
 

@@ -235,6 +235,9 @@ public:
                 }
             }
         }
+        
+        // [v11.4 Mandate] Dangling Pointer Protection
+        if(IS_VALID(xp)) xp.SetSignal(NULL);
     }
 };
 

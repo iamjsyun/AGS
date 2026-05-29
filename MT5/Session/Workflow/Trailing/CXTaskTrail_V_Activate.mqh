@@ -33,7 +33,7 @@ public:
         if(IS_VALID(pActive) && pActive.GetInt() == 1) return TASK_CONTINUE;
 
         // 설정값 확인
-        int threshold = (m_mode == TRAIL_MODE_ENTRY) ? sig.GetTEStart() : sig.GetTSStart();
+        int threshold = (m_mode == TRAIL_MODE_ENTRY) ? (int)sig.GetTEStart() : (int)sig.GetTSStart();
         if(threshold <= 0) return TASK_CONTINUE;
 
         ICXPriceManager* priceMgr = CX_GET_OBJ(ctx, "price_mgr", ICXPriceManager);

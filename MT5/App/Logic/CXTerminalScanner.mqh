@@ -19,14 +19,16 @@ public:
     bool IsSidExists(string sid) {
         if(sid == "") return false;
 
-        for(int i = PositionsTotal() - 1; i >= 0; i--) {
+        int totalPos = PositionsTotal();
+        for(int i = 0; i < totalPos; i++) {
             ulong ticket = PositionGetTicket(i);
             if(PositionSelectByTicket(ticket)) {
                 if(PositionGetString(POSITION_COMMENT) == sid) return true;
             }
         }
 
-        for(int i = OrdersTotal() - 1; i >= 0; i--) {
+        int totalOrd = OrdersTotal();
+        for(int i = 0; i < totalOrd; i++) {
             ulong ticket = OrderGetTicket(i);
             if(OrderSelect(ticket)) {
                 if(OrderGetString(ORDER_COMMENT) == sid) return true;
@@ -43,7 +45,8 @@ public:
         int count = 0;
 
         //-- 1. 활성 포지션 스캔
-        for(int i = PositionsTotal() - 1; i >= 0; i--) {
+        int totalPos = PositionsTotal();
+        for(int i = 0; i < totalPos; i++) {
             ulong ticket = PositionGetTicket(i);
             if(PositionSelectByTicket(ticket)) {
                 string sid = PositionGetString(POSITION_COMMENT);
@@ -66,7 +69,8 @@ public:
         }
 
         //-- 2. 대기 주문 스캔
-        for(int i = OrdersTotal() - 1; i >= 0; i--) {
+        int totalOrd = OrdersTotal();
+        for(int i = 0; i < totalOrd; i++) {
             ulong ticket = OrderGetTicket(i);
             if(OrderSelect(ticket)) {
                 string sid = OrderGetString(ORDER_COMMENT);
