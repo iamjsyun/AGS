@@ -1,0 +1,202 @@
+{
+  "main": {
+    "id": "2ee90cfb7876ee71",
+    "type": "split",
+    "children": [
+      {
+        "id": "67ca130cf5c5af3b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1539268d69c420f8",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "_doc/LoggingDietPlan_v1.0.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "LoggingDietPlan_v1.0"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "3f66e0f40b773cc9",
+    "type": "split",
+    "children": [
+      {
+        "id": "3b291e2ccd999d56",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "359e3e0b1f91e9f0",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "파일 탐색기"
+            }
+          },
+          {
+            "id": "053cfbc46cd32d08",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "검색"
+            }
+          },
+          {
+            "id": "55ffffda38c109c0",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "북마크"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "52c1eea5fce6eb11",
+    "type": "split",
+    "children": [
+      {
+        "id": "87352765ff53dde6",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "99b0a39746faf536",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "_doc/LoggingDietPlan_v1.0.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "LoggingDietPlan_v1.0 의 백링크"
+            }
+          },
+          {
+            "id": "9b9e48ab93b167ce",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "_doc/LoggingDietPlan_v1.0.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "LoggingDietPlan_v1.0 의 나가는 링크"
+            }
+          },
+          {
+            "id": "0a6499607d523202",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "태그"
+            }
+          },
+          {
+            "id": "eb7007906288b241",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "모든 속성"
+            }
+          },
+          {
+            "id": "dc386202077f71ef",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "_doc/LoggingDietPlan_v1.0.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "LoggingDietPlan_v1.0 의 개요"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:빠른 전환기 열기": false,
+      "graph:그래프 뷰 열기": false,
+      "canvas:새 캔버스 만들기": false,
+      "daily-notes:오늘의 일일 노트 열기": false,
+      "templates:템플릿 삽입": false,
+      "command-palette:명령어 팔레트 열기": false,
+      "bases:새 베이스 생성하기": false
+    }
+  },
+  "active": "359e3e0b1f91e9f0",
+  "lastOpenFiles": [
+    "MT5/AGS.ex5",
+    "scratch_rewrite_includes.py",
+    "compile_commands.json",
+    "MT5/Service/Execution/CXPositionManager.mqh",
+    "MT5/Service/Execution/CXOrderManager.mqh",
+    "MT5/Service/Execution/CXEntryManager.mqh",
+    "MT5/Service/Execution/CXExitManager.mqh",
+    "MT5/Service/Execution/CXTerminalPlatform.mqh",
+    "MT5/Workflow/Tasks/Trailing/CXTaskTrail_V_Extremum.mqh",
+    "MT5/Workflow/Tasks/Trailing/CXTaskTrail_V_Activate.mqh",
+    "MT5/Workflow/Tasks/Trailing/CXTaskTrail_R_Execute.mqh",
+    "_doc/ProjectAnalysisRefactoringPlan_v1.0.md",
+    "_doc/LoggingDietPlan_v1.0.md"
+  ]
+}

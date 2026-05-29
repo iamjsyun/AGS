@@ -1,0 +1,34 @@
+{
+  "project_rules": {
+    "coding_style": "C# .NET 8.0, clean architecture",
+    "naming_convention": "PascalCase for methods, camelCase for local variables",
+    "doc_format": "Markdown with JSDoc-style comments"
+  },
+  // "context_awareness": {
+  //   "frameworks": [
+  //     "WPF",
+  //     "NET.Core"
+  //   ],
+  //   "critical_paths": [
+  //     "./src/TradingEngine",
+  //     "./src/SignalExtractor"
+  //   ]
+  // },
+  "task_templates": {
+    "implementation_plan": "Generate detailed steps including unit test requirements"
+  },
+  "analysis_priority": {
+    "include_extensions": [
+      ".mqh",
+      ".mq5",
+      ".xaml"
+    ],
+    "exclude_folders": [
+      "bin",
+      "obj",
+      ".vs"
+    ]
+  },
+  "output_path": "_doc/",
+  "task_file_name": "task.md"
+}
