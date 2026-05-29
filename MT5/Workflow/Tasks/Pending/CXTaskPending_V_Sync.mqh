@@ -11,14 +11,23 @@
  * @brief [Verify] 터미널 실물 상태 동기화 및 외부 명령 감시
  */
 class CXTaskPending_V_Sync : public IXTask {
+private:
+    ICXAssetManager* m_invMgr;
+    IRepository*     m_repo;
+
 public:
     virtual string Name() override { return "Pending_V_Sync"; }
+
+    virtual bool Bind(ICXContext* ctx) override {
+        m_invMgr = CX_GET_OBJ(ctx, "asset_mgr", ICXAssetManager);
+        m_repo = CX_GET_OBJ(ctx, "repo", IRepository);
+        if(IS_INVALID(m_repo)) return false;
+        return IXTask::Bind(ctx);
+    }
+
     virtual int Execute(ICXParam* xp, ICXContext* ctx) override {
         ICXSignal* sig = xp.GetSignal();
-        ICXAssetManager* invMgr = CX_GET_OBJ(ctx, "asset_mgr", ICXAssetManager);
-        IRepository* repo = CX_GET_OBJ(ctx, "repo", IRepository);
-        
-        if(IS_INVALID(sig) || IS_INVALID(repo)) return TASK_BREAK;
+        if(IS_INVALID(sig)) return TASK_BREAK;
 
         //--- [v14.34 Fix] Error-State Liquidation Bypass
         if(sig.GetXAExit() == XA_ACTIVE) {
@@ -26,15 +35,13 @@ public:
             return SESSION_LIQUIDATING;
         }
 
-
-
         // 1. 상태 동기화 (오더 -> 포지션 전환 감지)
-        if(IS_VALID(invMgr)) {
+        if(IS_VALID(m_invMgr)) {
             ulong ticket = (ulong)sig.GetTicket();
-            if(ticket > 0 && invMgr.IsPositionExists(ticket)) {
+            if(ticket > 0 && m_invMgr.IsPositionExists(ticket)) {
                 XP_LOG_OK(xp, CXAuditFormatter::Build("PENDING-V-SYNC", xp, StringFormat("Order filled! Ticket:%I64u is now a Position.", ticket)));
                 CXMessageProvider::UpdateStatus(sig, XE_EXECUTED, "Pending Order Filled");
-                repo.UpdateStatus(sig);
+                m_repo.UpdateStatus(sig);
                 return SESSION_ACTIVE;
             }
         }

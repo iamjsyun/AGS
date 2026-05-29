@@ -32,6 +32,9 @@ public:
     // Result Feedback
     virtual string GetLastError() const = 0;
     
+    // [v2.0] Pre-Validated Binding
+    virtual bool Bind(ICXContext* ctx) { return true; }
+    
     // General Validation
     virtual bool Check(ICXParam* xp, ICXContext* ctx) = 0;
 };

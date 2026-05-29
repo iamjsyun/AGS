@@ -11,17 +11,26 @@
  * @brief [Persistence] DB에 청산 진행 중 상태 기록 (잠금)
  */
 class CXTaskExit_P_Lock : public IXTask {
+private:
+    IRepository* m_repo;
+
 public:
     virtual string Name() override { return "Exit_P_Lock"; }
+
+    virtual bool Bind(ICXContext* ctx) override {
+        m_repo = CX_GET_OBJ(ctx, "repo", IRepository);
+        if(IS_INVALID(m_repo)) return false;
+        return IXTask::Bind(ctx);
+    }
+
     virtual int Execute(ICXParam* xp, ICXContext* ctx) override {
         ICXSignal* sig = xp.GetSignal();
-        IRepository* repo = CX_GET_OBJ(ctx, "repo", IRepository);
-        if(IS_INVALID(sig) || IS_INVALID(repo)) return TASK_BREAK;
+        if(IS_INVALID(sig)) return TASK_BREAK;
 
         if(sig.GetStatus() >= XE_PENDING_REQ) return TASK_CONTINUE;
 
         CXMessageProvider::UpdateStatus(sig, sig.GetStatus(), "Intent: Liquidation Requesting...");
-        if(repo.UpdateStatus(sig)) {
+        if(m_repo.UpdateStatus(sig)) {
             return TASK_CONTINUE;
         }
 

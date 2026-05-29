@@ -1,4 +1,4 @@
-﻿//+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
 //|                                                          ATS.mq5 |
 //|                                  Copyright 2026, Gemini CLI      |
 //| [v13.5] Main ATS Engine - UAF & Resilience Standard              |
@@ -12,35 +12,14 @@
 #include "Service\App\CXAppService.mqh"
 #include "Service\App\CXServiceFactory.mqh"
 #include "Core\Models\CXConfig.mqh"
+#include "Core\Guard\TestDependencyInjection.mqh"
 
 //--- [Group: Basic Configuration]
 input string         InpTargetMagics    = "1001,1002,3001,3002"; // Target Magic Numbers (CSV)
-input double         InpTimerInterval   = 0.2;                 // Timer Interval (Seconds)
+input int            InpTimerInterval   =  200;                 // Timer Interval (Seconds)
 input string         InpRemoteAddr      = "127.0.0.1:878";     // Remote Log Address (IP:Port)
 input string         InpDatabaseName    = "ATS.db";            // DB: Database Filename
 input bool           InpUseCommonPath   = true;                // DB: Use Terminal Common Path
-
-//--- [Group: Global Log Options]
-input bool           InpLog_UseUI       = true;                // UI: Dashboard Log Enabled
-input bool           InpLog_UseRemote   = true;                // Remote: Global Remote Toggle
-input string         InpLog_FilterCnos  = "*";                 // Filter: Target CNO List (CSV / *:All)
-input ENUM_LOG_LEVEL InpLog_Level       = LOG_LVL_TRACE;        // Log Level
-
-//--- [Group: Signal Watcher Log]
-input bool           InpWatcher_UseFile   = true;              // Watcher: File Log Enabled
-input bool           InpWatcher_UseRemote = true;              // Watcher: Remote Log Enabled
-input bool           InpWatcher_InitStart = true;              // Watcher: Clear Log on Start (Mandatory by v11.5)
-
-//--- [Group: System Infra Log]
-input bool           InpSystem_UseFile    = true;              // System: File Log Enabled
-input bool           InpSystem_UseRemote  = false;             // System: Remote Log Enabled
-input bool           InpSystem_InitStart  = true;              // System: Clear Log on Start (Mandatory by v11.5)
-
-//--- [Group: Trading Session Log]
-input bool           InpSession_UseFile   = true;              // Session: File Log Enabled
-input bool           InpSession_UseRemote = true;              // Session: Remote Log Enabled
-input bool           InpSession_UseUI     = true;              // Session: UI Log Enabled
-input bool           InpSession_InitStart = true;              // Session: Clear Log on Start (Mandatory by v11.5)
 
 //--- Global Instance
 CXAppService* g_app = NULL;
@@ -55,16 +34,11 @@ int OnInit() {
     ChartSetInteger(0, CHART_SHOW_OBJECT_DESCR, false);
     
     //--- [v10.4] Testing Mode: Timer-only execution (100ms / 0.1s)
-    EventSetMillisecondTimer(100);
+    EventSetMillisecondTimer(InpTimerInterval);
     
  
     // 1. Configuration 객체 생성 (v10.27)
-    g_config = new CXConfig(InpTargetMagics, InpTimerInterval, InpRemoteAddr, 
-                            InpLog_UseUI, InpLog_UseRemote, InpLog_FilterCnos, InpLog_Level,
-                            InpWatcher_UseFile, InpWatcher_UseRemote, InpWatcher_InitStart,
-                            InpSystem_UseFile, InpSystem_UseRemote, InpSystem_InitStart,
-                            InpSession_UseFile, InpSession_UseRemote, InpSession_UseUI, InpSession_InitStart,
-                            InpDatabaseName, InpUseCommonPath);
+    g_config = new CXConfig(InpTargetMagics, InpTimerInterval, InpRemoteAddr, InpDatabaseName, InpUseCommonPath);
     
     if(IS_INVALID(g_config)) return INIT_FAILED;
 
@@ -73,6 +47,12 @@ int OnInit() {
     g_app = new CXAppService();
     if(IS_INVALID(g_app) || !g_app.Initialize(g_config, factory)) {
         Print("App Service initialization failed.");
+        return INIT_FAILED;
+    }
+
+    // 3. 의존성 주입(DI) 정합성 검증 테스트 가동 (Fail-Fast)
+    if(!TestDependencyInjection::Verify(g_app.GetContext())) {
+        Print("Dependency Injection Verification failed. Self-Terminating EA.");
         return INIT_FAILED;
     }
 

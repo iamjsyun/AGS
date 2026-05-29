@@ -1,4 +1,4 @@
-﻿#ifndef CXCOMPOSITESTAGE_MQH
+#ifndef CXCOMPOSITESTAGE_MQH
 #define CXCOMPOSITESTAGE_MQH
 
 #include "..\..\Core\Interfaces\IXTask.mqh"
@@ -32,6 +32,32 @@ public:
     }
 
     virtual string Name() override { return m_name; }
+
+    virtual bool AssertDependencies(ICXContext* ctx) override {
+        string requirements[] = {"repo", "asset_mgr", "price_mgr", "sym_mgr", "risk_mgr", "terminal_platform"};
+        for(int i = 0; i < ArraySize(requirements); i++) {
+            if(IS_INVALID(ctx.Get(requirements[i]))) {
+                PrintFormat("[FATAL] Dependency Injection Missing in stage '%s': Service '%s' is NULL.", m_name, requirements[i]);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    virtual bool Bind(ICXContext* ctx) override {
+        if(!AssertDependencies(ctx)) return false;
+        bool success = true;
+        for(int i = 0; i < m_taskCount; i++) {
+            IXTask* task = m_taskPtrs[i];
+            if(IS_VALID(task)) {
+                if(!task.Bind(ctx)) {
+                    PrintFormat("[FATAL] Task Bind Failed in stage '%s': Task '%s'", m_name, task.Name());
+                    success = false;
+                }
+            }
+        }
+        return success;
+    }
 
     /**
      * @brief 실행할 태스크를 체인에 추가합니다.

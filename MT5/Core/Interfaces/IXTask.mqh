@@ -21,12 +21,18 @@ protected:
     int m_retryCount;
     int m_timeoutSeconds;
     datetime m_startTime;
+    bool m_isBound; // [v2.0]
 
 public:
-    IXTask() : m_maxRetries(0), m_retryCount(0), m_timeoutSeconds(0), m_startTime(0) {}
+    IXTask() : m_maxRetries(0), m_retryCount(0), m_timeoutSeconds(0), m_startTime(0), m_isBound(false) {}
     virtual ~IXTask() {}
 
     virtual string Name() = 0;
+    
+    /**
+     * @brief [v2.0] 의존성 주입 및 캐싱 검증
+     */
+    virtual bool Bind(ICXContext* ctx) { return m_isBound = true; }
     
     /**
      * @brief 태스크 로직 실행

@@ -24,6 +24,7 @@ _log/
 !ATSA.json
 !tasks.json
 !launch.json
+!scenario_manifest.json
 
 # Git internal data (Speed up search)
 .git/

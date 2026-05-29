@@ -33,6 +33,28 @@ public:
     virtual void   SetTransaction(const MqlTradeTransaction& trans) = 0;
     virtual void   GetTransaction(MqlTradeTransaction& trans) const = 0;
     
+    //--- Dual-Binding Context (v2.0)
+    virtual ICXContext* Global() = 0;
+    virtual void        SetGlobal(ICXContext* globalCtx) = 0;
+    virtual ICXContext* Local() = 0;
+    virtual void        SetLocal(ICXContext* localCtx) = 0;
+
+    //--- Dynamic Property Bag (v2.0)
+    virtual ICXParam*   SetDouble(string key, double val) = 0;
+    virtual double      GetDouble(string key, double defaultVal=0.0) const = 0;
+
+    virtual ICXParam*   SetInt(string key, int val) = 0;
+    virtual int         GetInt(string key, int defaultVal=0) const = 0;
+    
+    virtual ICXParam*   SetLong(string key, long val) = 0;
+    virtual long        GetLong(string key, long defaultVal=0) const = 0;
+
+    virtual ICXParam*   SetString(string key, string val) = 0;
+    virtual string      GetString(string key, string defaultVal="") const = 0;
+
+    virtual ICXParam*   SetObject(string key, CObject* val) = 0;
+    virtual CObject*    GetObject(string key) const = 0;
+    
     //--- Factory (v15.2)
     virtual ICXParam* CreateEmptyParam() = 0;
 };#endif

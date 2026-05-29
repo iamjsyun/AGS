@@ -1,4 +1,4 @@
-﻿#ifndef CX_TASK_ACTIVE_P_ALIGN_MQH
+#ifndef CX_TASK_ACTIVE_P_ALIGN_MQH
 #define CX_TASK_ACTIVE_P_ALIGN_MQH
 
 #include "..\..\..\Core\Interfaces\IXTask.mqh"
@@ -12,27 +12,33 @@
  * @brief [Persistence] 터미널 상태와 DB 상태 동기화
  */
 class CXTaskActive_P_Align : public IXTask {
+private:
+    IRepository*       m_repo;
+    IXPositionManager* m_posMgr;
+
 public:
+    CXTaskActive_P_Align() : m_repo(NULL), m_posMgr(NULL) {}
     virtual string Name() override { return "Active_P_Align"; }
+    
+    virtual bool Bind(ICXContext* ctx) override {
+        m_repo   = CX_GET_OBJ(ctx, "repo", IRepository);
+        m_posMgr = CX_GET_OBJ(ctx, "pos_mgr", IXPositionManager);
+        return (m_repo != NULL && m_posMgr != NULL) && IXTask::Bind(ctx);
+    }
+
     virtual int Execute(ICXParam* xp, ICXContext* ctx) override {
         ICXSignal* sig = xp.GetSignal();
-        IRepository* repo = CX_GET_OBJ(ctx, "repo", IRepository);
-        if(IS_INVALID(sig) || IS_INVALID(repo)) return TASK_BREAK;
+        if(IS_INVALID(sig)) return TASK_BREAK;
 
         bool exists = (xp.GetInt() == 1);
         
         if(!exists && sig.GetStatus() < XE_CLOSED_SIGNAL) {
             XP_LOG_WARN(xp, CXAuditFormatter::Build("ACTIVE-P-ALIGN", xp, "Mismatch: Position not found. Triggering Align."));
             
-            IXPositionManager* posMgr = CX_GET_OBJ(ctx, "pos_mgr", IXPositionManager);
-            if(IS_VALID(posMgr)) {
-                posMgr.Pulse(xp);
-            }
-            if(repo.UpdateStatus(sig)) {
+            m_posMgr.Pulse(xp);
+            if(m_repo.UpdateStatus(sig)) {
                 XP_LOG_OK(xp, CXAuditFormatter::Build("ACTIVE-P-ALIGN", xp, "SUCCESS: DB Aligned."));
             }
-        } else {
-            // [v14.16 Muted] XP_LOG_TRACE(xp, CXAuditFormatter::Build("ACTIVE-P-ALIGN", xp, "OK: Terminal and DB in sync."));
         }
 
         return TASK_CONTINUE;

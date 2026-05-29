@@ -68,6 +68,10 @@ public:
         SAFE_DELETE(m_watcherLogger);
     }
 
+    virtual bool Bind() override {
+        return (IS_VALID(m_sequence)) ? m_sequence.Bind() : false;
+    }
+
     virtual void Pulse(ICXParam* xp) override {
         if(IS_INVALID(m_sequence)) return;
         

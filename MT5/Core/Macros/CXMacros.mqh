@@ -38,6 +38,12 @@
 
 //--- 서비스 및 객체 획득 매크로 (Surgical Resolve)
 #define CX_GET_OBJ(ctx, key, type) (IS_VALID(ctx) ? (type*)(ctx.Get(key)) : NULL)
+#define CX_REQUIRE_OBJ(ctx, key, type, outPtr) \
+    type* outPtr = CX_GET_OBJ(ctx, key, type); \
+    if(IS_INVALID(outPtr)) { \
+        PrintFormat("[FATAL] Required service '%s' is missing in context.", key); \
+        return TASK_BREAK; \
+    }
 
 //--- 로깅 헬퍼 함수
 inline ICXLogger* GetLoggerSafe(ICXParam* xp, ENUM_LOG_LEVEL level, bool is_sequence) {

@@ -4,6 +4,7 @@
 #include <Arrays\ArrayObj.mqh>
 #include <Generic\HashMap.mqh>
 #include "..\Defines\CXDefine.mqh"
+#include "..\Interfaces\ICXSequenceOrchestrator.mqh"
 #include "CXSequenceRegistry.mqh"
 #include "CXSequenceStage.mqh"
 
@@ -11,7 +12,7 @@
  * @class CXSequenceOrchestrator
  * @brief [v16.7] 시퀀스 구성을 위한 기반 프레임워크 (추상 클래스 역할)
  */
-class CXSequenceOrchestrator : public CObject {
+class CXSequenceOrchestrator : public ICXSequenceOrchestrator {
 protected:
     CArrayObj*             m_watcher_map;       // Entry Watcher Map
     CArrayObj*             m_watcher_exit_map;  // Exit Watcher Map
@@ -58,6 +59,49 @@ public:
 
     void BuildSessionSequence(CXFluentSequence* seq) {
         CXSequenceRegistry::BuildSequence(seq, m_session_map);
+    }
+
+    virtual bool Bind(ICXContext* ctx) {
+        if(IS_INVALID(ctx)) return false;
+        
+        bool success = true;
+        
+        // 1. Watcher Sequence 검증
+        CXFluentSequence* watcherSeq = new CXFluentSequence(ctx, "TestWatcherSeq");
+        if(IS_VALID(watcherSeq)) {
+            BuildWatcherSequence(watcherSeq);
+            if(!watcherSeq.Bind()) {
+                Print("[FATAL] Watcher Sequence DI Binding Failed.");
+                success = false;
+            }
+            delete watcherSeq;
+        } else success = false;
+
+        // 2. Watcher Exit Sequence 검증
+        if(m_watcher_exit_map.Total() > 0) {
+            CXFluentSequence* watcherExitSeq = new CXFluentSequence(ctx, "TestWatcherExitSeq");
+            if(IS_VALID(watcherExitSeq)) {
+                BuildWatcherExitSequence(watcherExitSeq);
+                if(!watcherExitSeq.Bind()) {
+                    Print("[FATAL] Watcher Exit Sequence DI Binding Failed.");
+                    success = false;
+                }
+                delete watcherExitSeq;
+            } else success = false;
+        }
+
+        // 3. Session Sequence 검증
+        CXFluentSequence* sessionSeq = new CXFluentSequence(ctx, "TestSessionSeq");
+        if(IS_VALID(sessionSeq)) {
+            BuildSessionSequence(sessionSeq);
+            if(!sessionSeq.Bind()) {
+                Print("[FATAL] Session Sequence DI Binding Failed.");
+                success = false;
+            }
+            delete sessionSeq;
+        } else success = false;
+
+        return success;
     }
 
     /**

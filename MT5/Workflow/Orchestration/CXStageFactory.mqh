@@ -1,4 +1,4 @@
-﻿#ifndef CXSTAGEFACTORY_MQH
+#ifndef CXSTAGEFACTORY_MQH
 #define CXSTAGEFACTORY_MQH
 
 #include "..\..\Core\Interfaces\IXStage.mqh"
@@ -7,7 +7,7 @@
 #include "..\Watcher\CXStageEntryExecute.mqh"
 #include "..\Watcher\CXStageExitDiscovery.mqh"
 #include "..\Watcher\CXStageExitExecute.mqh"
-#include "..\Watcher\CXStageSystemSetup.mqh"
+#include "..\Bootstrap\CXStageSystemSetup.mqh"
 
 #include "CXTaskFactory.mqh"
 #include "..\Session\CXCompositeStage.mqh"

@@ -13,6 +13,9 @@ public:
     
     virtual void      OnEnter(ICXContext* ctx) = 0;
     virtual void      OnExit(ICXContext* ctx) = 0;
+    
+    virtual bool      AssertDependencies(ICXContext* ctx) { return true; }
+    virtual bool      Bind(ICXContext* ctx) { return true; }
 };
 
 #endif

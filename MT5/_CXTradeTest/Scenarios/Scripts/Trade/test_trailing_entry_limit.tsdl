@@ -1,0 +1,25 @@
+#==================================================================
+# ATSE Scenario: Trailing Entry Limit Buffer (v1.1)
+# Covers: Trailing Entry -> Safe Buffer Guard -> Order Modify
+#==================================================================
+
+SCENARIO: SCEN_TE_LIMIT_01 : "GOLDF# Trailing Entry Limit Buffer Guard Validation"
+DEFINE: SYMBOL=GOLDF#, CNO=2001, SNO=01, GNO=01, DIR=1, TYPE=1
+
+# 시작 시장가: 2350.00, 스프레드 20pt ($0.20)
+PRICER: GOLDF# > TREND : trend_slope=0.0, jump_prob=0.0, start=2350.00, spread=20
+
+# Tick 1: 신규 진입 신호 주입 (TE_LIMIT=500pt, TE_START=300pt)
+TICK: 1   > INJECT: signals : xa_entry=1, xa_exit=0, price_signal=2350.00, \
+                              cno=2001, yymmddhh=26052804, sno=01, gno=01, dir=1, type=1, \
+                              te_start=300, te_step=100, te_limit=500
+          ? EXPECT: session : state=ORD_READY
+
+# Tick 2: 대기 주문 등록 완료 모의 (2350.00 - 500pt = 2345.00에 Buy Limit 오더 등록)
+TICK: 2   > INJECT: terminal: order_fill=false, ticket=80001
+          ? EXPECT: session : state=ORD_TRAILING * xe_status=XE_PENDING_PLACED
+
+# Tick 3: 가격이 2347.00으로 급락 (오더 가격 2345.00과의 간격이 200pt로 좁혀짐 < TE_LIMIT 500pt)
+# 예상 결과: 안전거리 유지를 위해 오더를 2347.00 - 500pt = 2342.00으로 즉시 후퇴 수정 요청 발생
+TICK: 3   > MARKET: GOLDF#  : price=2347.00
+          ? EXPECT: session : state=ORD_TRAILING * xe_status=XE_PENDING_PLACED

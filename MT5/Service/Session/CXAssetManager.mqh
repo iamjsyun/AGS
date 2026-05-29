@@ -85,6 +85,13 @@ public:
         ICXSignal* sig = xp.GetSignal();
         if(IS_INVALID(sig)) return 0;
 
+        // [v1.4 Fix] Duplicate SID Guard Mandate
+        // 이미 해당 SID로 관리 중인 세션이나 자산이 있다면 중복 진입 거부 (데이터 무결성 보호)
+        if(FindSessionBySid(sig.GetSid()) != NULL || IsAssetLive(sig.GetSid())) {
+            XP_LOG_ERROR(xp, StringFormat("[ASSET-MGR] Entry Rejected. SID %s already active.", sig.GetSid()));
+            return 0;
+        }
+
         ICXPriceManager* priceMgr = m_factory.CreatePriceManager(m_globalContext);
         if(IS_VALID(priceMgr)) {
             string sym = sig.GetSymbol(); int dir = sig.GetDir();
@@ -231,7 +238,15 @@ virtual bool ExecuteExit(ICXParam* xp, string sid) override {
     virtual ICXTradingSession* CreateSession(ICXParam* xp) override {
         if(IS_INVALID(m_factory) || IS_INVALID(xp)) return NULL;
         ICXTradingSession* session = m_factory.CreateSession(xp);
-        if(IS_VALID(session)) { m_tasks.Add(session); return session; }
+        if(IS_VALID(session)) { 
+            if(session.Bind()) {
+                m_tasks.Add(session); 
+                return session; 
+            } else {
+                PrintFormat("[FATAL] Session Bind Failed for SID: %s", session.GetSid());
+                SAFE_DELETE(session);
+            }
+        }
         return NULL;
     }
 

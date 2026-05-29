@@ -1,4 +1,4 @@
-﻿#ifndef CXAPPSERVICE_MQH
+#ifndef CXAPPSERVICE_MQH
 #define CXAPPSERVICE_MQH
 
 #include "..\..\Core\Interfaces\ICXAppService.mqh"
@@ -22,6 +22,7 @@
 #include "..\..\Core\Logger\CXLogDispatcher.mqh"
 #include "CXServiceFactory.mqh"
 #include "..\..\Core\Models\CXConfig.mqh"
+#include "..\..\Core\Guard\CXIntegrityGuard.mqh"
 
 #include "..\..\Core\UI\CXUI.mqh"
 
@@ -48,6 +49,7 @@ private:
     ICXPriceManager*      m_priceManager;
     IXExitManager*        m_exitManager;
     CXUI*                 m_ui;
+    ICXIntegrityGuard*    m_integrityGuard; // [v2.1] Independent Inspector
 
     // Scheduler tick counters (v1.0 Multi-Interval Scheduler)
     uint                  m_lastWatcherScanTime;
@@ -58,11 +60,12 @@ public:
     CXAppService() : m_config(NULL), m_db(NULL), m_repo(NULL), m_assetManager(NULL), 
                     m_factory(NULL), m_watcher(NULL), m_logger(NULL), m_globalContext(NULL),
                     m_orchestrator(NULL), m_guard(NULL), m_terminalPlatform(NULL),
-                    m_priceManager(NULL), m_exitManager(NULL), m_ui(NULL),
+                    m_priceManager(NULL), m_exitManager(NULL), m_ui(NULL), m_integrityGuard(NULL),
                     m_lastWatcherScanTime(0), m_lastAssetPulseTime(0), m_lastUiRefreshTime(0) {}
 
     virtual ~CXAppService() override {
         SAFE_DELETE(m_ui);
+        SAFE_DELETE(m_integrityGuard);
         SAFE_DELETE(m_watcher);
         SAFE_DELETE(m_assetManager);
         SAFE_DELETE(m_repo);
@@ -136,6 +139,17 @@ public:
         m_ui = new CXUI(m_globalContext);
         if(IS_VALID(m_ui)) m_ui.Initialize();
         
+        // [v2.1] Independent Assembly Integrity Inspection (IAI)
+        m_integrityGuard = new CXIntegrityGuard();
+        if(!m_integrityGuard.Inspect(m_globalContext, m_orchestrator)) {
+            m_logger.Log(LOG_LVL_ERROR, "================================================");
+            m_logger.Log(LOG_LVL_ERROR, "[BOOTSTRAP-FATAL] Assembly Integrity Check Failed.");
+            m_logger.Log(LOG_LVL_ERROR, m_integrityGuard.GetDetailedReport());
+            m_logger.Log(LOG_LVL_ERROR, "================================================");
+            return false;
+        }
+
+        m_logger.Log(LOG_LVL_INFO, "[BOOTSTRAP] Integrity Guard Passed. System Ready.");
         return true;
     }
 

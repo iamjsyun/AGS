@@ -53,6 +53,10 @@ public:
     virtual int    GetState() const override { return IS_VALID(m_sequence) ? m_sequence.State() : 99; }
     virtual ICXSignal* GetSignal() const override { return m_signal; }
 
+    virtual bool Bind() override {
+        return (IS_VALID(m_sequence)) ? m_sequence.Bind() : false;
+    }
+
     virtual void Start(ICXParam* xp) override {
         if(IS_VALID(m_sequence)) m_sequence.Pulse(xp);
     }

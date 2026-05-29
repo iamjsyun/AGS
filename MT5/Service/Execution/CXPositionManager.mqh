@@ -30,12 +30,9 @@ public:
 
     virtual void SetMagic(ulong magic) override { m_terminal.SetMagic(magic); }
 
-    /**
-     * @brief [v13.4 Audit] 포지션 감사 문자열 생성
-     */
     virtual string GetAuditString(ICXParam* xp, string actionLabel = "") override {
         ICXSignal* sig = xp.GetSignal();
-        if(IS_INVALID(sig)) return "[" + actionLabel + "] INVALID_SIGNAL";
+        if(!CXLogDispatcher::IsOk(sig)) return "[" + actionLabel + "] INVALID_SIGNAL";
 
         ulong ticket = sig.GetTicket();
         double profit = 0;
@@ -54,16 +51,16 @@ public:
      * @brief 포지션 유효성 확인 및 상태 업데이트
      */
     virtual void Pulse(ICXParam* xp) override {
-        if(IS_INVALID(m_ctx) || IS_INVALID(xp)) return;
+        if(!CXLogDispatcher::IsOk(m_ctx) || !CXLogDispatcher::IsOk(xp)) return;
         ICXSignal* sig = xp.GetSignal();
-        if(IS_INVALID(sig)) return;
+        if(!CXLogDispatcher::IsOk(sig)) return;
 
         ulong ticket = (ulong)sig.GetTicket();
         if(ticket == 0) return;
 
         //--- [v11.3 SSOC Resolution]
         ICXAssetManager* invMgr = CX_GET_OBJ(m_ctx, "asset_mgr", ICXAssetManager);
-        if(IS_INVALID(invMgr)) {
+        if(!CXLogDispatcher::IsOk(invMgr)) {
             XP_LOG_ERROR(xp, CXAuditFormatter::Build("POS-MANAGER", xp, "CRITICAL: AssetManager Missing."));
             return;
         }
@@ -98,7 +95,7 @@ public:
             CXMessageProvider::UpdateStatus(sig, status, reason);
             
             IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
-            if(IS_VALID(repo)) repo.UpdateStatus(sig);
+            if(CXLogDispatcher::IsOk(repo)) repo.UpdateStatus(sig);
 
             XP_LOG_INFO(xp, CXAuditFormatter::Build("POS-MANAGER", xp, "Asset closed by broker: " + reason + " (Manual Sync: xa_exit=1)"));
             return;
@@ -108,7 +105,7 @@ public:
         string retryKey = StringFormat("HistRetry_%I64u", ticket);
         int retryCount = 0;
         ICXParam* pOld = m_ctx.GetParam(retryKey);
-        if(IS_VALID(pOld)) retryCount = pOld.GetInt();
+        if(CXLogDispatcher::IsOk(pOld)) retryCount = pOld.GetInt();
 
         if(retryCount < 5) {
             CXParam* pRetry = new CXParam();
@@ -130,7 +127,7 @@ public:
         XP_LOG_INFO(xp, GetAuditString(xp, "POS-MODIFY-START"));
 
         ICXAssetManager* invMgr = CX_GET_OBJ(m_ctx, "asset_mgr", ICXAssetManager);
-        if(IS_INVALID(invMgr)) return false;
+        if(!CXLogDispatcher::IsOk(invMgr)) return false;
 
         // 1. 수정 시도
         if(!m_terminal.PositionModify(xp, ticket, sl, tp)) {
@@ -141,7 +138,7 @@ public:
             string err_msg = CXAuditFormatter::Build("POS-MODIFY-FAIL", xp, spec);
             
             XP_LOG_ERROR(xp, err_msg);
-            if(IS_VALID(xp)) xp.SetString(err_msg);
+            if(CXLogDispatcher::IsOk(xp)) xp.SetString(err_msg);
             ResetLastError();
             return false;
         }
@@ -159,13 +156,13 @@ public:
         
         string vErr = CXAuditFormatter::Build("POS-MODIFY-VERIFY-FAIL", xp, StringFormat("ticket:%I64u", ticket));
         XP_LOG_ERROR(xp, vErr);
-        if(IS_VALID(xp)) xp.SetString(vErr);
+        if(CXLogDispatcher::IsOk(xp)) xp.SetString(vErr);
         return false;
     }
 
     virtual void ScanAndBind(ICXParam* xp, CObject* sessionMgr) override {
         ICXAssetManager* mgr = CX_CAST(ICXAssetManager, sessionMgr);
-        if(IS_INVALID(mgr)) return;
+        if(!CXLogDispatcher::IsOk(mgr)) return;
 
         int total = m_terminal.GetPositionsTotal();
         for(int i = 0; i < total; i++) {
@@ -176,7 +173,7 @@ public:
 
             long magic = PositionGetInteger(POSITION_MAGIC);
             ICXConfig* cfg = CX_GET_OBJ(m_ctx, "config", ICXConfig);
-            if(IS_VALID(cfg) && !cfg.IsTargetMagic(magic)) continue;
+            if(CXLogDispatcher::IsOk(cfg) && !cfg.IsTargetMagic(magic)) continue;
 
             string sid = PositionGetString(POSITION_COMMENT);
             StringTrimLeft(sid); StringTrimRight(sid);
@@ -184,12 +181,12 @@ public:
 
             // Check if active session already exists for this SID
             ICXTradingSession* existing = mgr.FindSessionBySid(sid);
-            if(IS_INVALID(existing)) {
+            if(!CXLogDispatcher::IsOk(existing)) {
                 IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
-                if(IS_INVALID(repo)) continue;
+                if(!CXLogDispatcher::IsOk(repo)) continue;
 
                 ICXSignal* sig = repo.GetSignalBySid(sid);
-                if(IS_INVALID(sig)) continue; // Orphan or Zombie asset, handled by ReverseInjector
+                if(!CXLogDispatcher::IsOk(sig)) continue; // Orphan or Zombie asset, handled by ReverseInjector
 
                 if(sig.GetStatus() >= XE_CLOSED_SIGNAL) {
                     SAFE_DELETE(sig);
@@ -204,9 +201,9 @@ public:
 
                 // [v18.26 Fix] Reuse persistent xp instead of stack sp to avoid invalid pointer access
                 xp.SetSignal(sig);
-                if(IS_VALID(mgr)) {
+                if(CXLogDispatcher::IsOk(mgr)) {
                     ICXTradingSession* session = mgr.CreateSession(xp);
-                    if(IS_VALID(session)) {
+                    if(CXLogDispatcher::IsOk(session)) {
                         session.Start(xp);
                         XP_LOG_OK(xp, StringFormat("[POS-MANAGER-SCAN] Bound new active position to session. Ticket:%I64u, SID:%s", ticket, sid));
                     } else {
@@ -219,14 +216,14 @@ public:
             } else {
                 // If session exists, ensure the signal ticket is up to date (mapping pending order ticket to active position ticket)
                 ICXSignal* sig = existing.GetSignal();
-                if(IS_VALID(sig) && sig.GetTicket() != ticket) {
+                if(CXLogDispatcher::IsOk(sig) && sig.GetTicket() != ticket) {
                     if(sig.GetStatus() < XE_EXECUTED) {
                         sig.SetTag("LIMIT_FILL"); // [v1.0] 진입 경로 태깅 (지정가 체결)
                         sig.SetStatus(XE_EXECUTED);
                         sig.SetStatusMsg(StringFormat("Limit Fill Detected. Ticket:%I64u", ticket));
                         
                         IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
-                        if(IS_VALID(repo)) repo.UpdateStatus(sig);
+                        if(CXLogDispatcher::IsOk(repo)) repo.UpdateStatus(sig);
                         XP_LOG_OK(xp, StringFormat("[POS-MANAGER-SCAN] Limit Order Filled. Tag:LIMIT_FILL, Ticket:%I64u, SID:%s", ticket, sid));
                     }
                     sig.SetTicket(ticket);
@@ -235,7 +232,7 @@ public:
         }
         
         // [v11.4 Mandate] Dangling Pointer Protection
-        if(IS_VALID(xp)) xp.SetSignal(NULL);
+        if(CXLogDispatcher::IsOk(xp)) xp.SetSignal(NULL);
     }
 };
 

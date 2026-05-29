@@ -35,15 +35,15 @@ public:
 
     virtual string GetAuditString(ICXParam* xp, string actionLabel = "") override {
         ICXSignal* sig = xp.GetSignal();
-        if(IS_INVALID(sig)) return "[FUNC:" + actionLabel + "] INVALID_SIGNAL";
+        if(!CXLogDispatcher::IsOk(sig)) return "[FUNC:" + actionLabel + "] INVALID_SIGNAL";
         
         string spec = xp.GetString();
         if(spec == "") {
             string symbol = sig.GetSymbol();
             ICXSymbolManager* symMgr = CX_GET_OBJ(m_ctx, "sym_mgr", ICXSymbolManager);
             ICXPriceManager* priceMgr = CX_GET_OBJ(m_ctx, "price_mgr", ICXPriceManager);
-            double point = IS_VALID(symMgr) ? symMgr.GetPoint(symbol) : SymbolInfoDouble(symbol, SYMBOL_POINT);
-            double mkt   = IS_VALID(priceMgr) ? priceMgr.GetMarketPrice(symbol, sig.GetDir()) : SymbolInfoDouble(symbol, (sig.GetDir() == CX_DIR_BUY) ? SYMBOL_ASK : SYMBOL_BID);
+            double point = CXLogDispatcher::IsOk(symMgr) ? symMgr.GetPoint(symbol) : SymbolInfoDouble(symbol, SYMBOL_POINT);
+            double mkt   = CXLogDispatcher::IsOk(priceMgr) ? priceMgr.GetMarketPrice(symbol, sig.GetDir()) : SymbolInfoDouble(symbol, (sig.GetDir() == CX_DIR_BUY) ? SYMBOL_ASK : SYMBOL_BID);
             
             // [v1.1 Fix] 실시간 시장가(mkt) 대신 '고정 참조 가격' 기반으로 논리적 트리거 가격 산출 (Jitter 제거)
             double refPrice = sig.GetPriceSignal();
@@ -51,7 +51,7 @@ public:
 
             string activeKey = "TE_Active_" + sig.GetSid();
             ICXParam* pActive = m_ctx.GetParam(activeKey);
-            bool isActive = (IS_VALID(pActive) && pActive.GetInt() == 1);
+            bool isActive = (CXLogDispatcher::IsOk(pActive) && pActive.GetInt() == 1);
 
             double tesp = 0;
             double telp = 0;
@@ -64,7 +64,7 @@ public:
                 // 2. 활성화 후: 극점(Extremity) 대비 TEStep 포인트 (움직이는 반등 트리거선 표시)
                 string extKey = "LastEntryExtremity_" + sig.GetSid();
                 ICXParam* pExt = m_ctx.GetParam(extKey);
-                if(IS_VALID(pExt) && pExt.GetDouble() > 0) refPrice = pExt.GetDouble();
+                if(CXLogDispatcher::IsOk(pExt) && pExt.GetDouble() > 0) refPrice = pExt.GetDouble();
                 
                 tesp = refPrice - (sig.GetTEStep() * point * (sig.GetDir()==CX_DIR_BUY?-1:1));
                 telp = refPrice + (sig.GetTELimit() * point * (sig.GetDir()==CX_DIR_BUY?-1:1));

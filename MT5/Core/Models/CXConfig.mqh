@@ -46,6 +46,23 @@ public:
           m_session_file(sessionFile), m_session_remote(sessionRemote), m_session_ui(sessionUI), m_session_init(sessionInit),
           m_dbName(dbName), m_dbCommon(dbCommon) {
         
+        InitializeMagics();
+    }
+
+    CXConfig(string targetMagics, double timerInterval, string remoteAddr,
+             string dbName, bool dbCommon)
+        : m_targetMagics(targetMagics), m_timerInterval(timerInterval), m_remoteAddr(remoteAddr),
+          m_log_ui(false), m_log_remote(false), m_log_filter_cnos(""), m_log_level(LOG_LVL_ERROR),
+          m_watcher_file(false), m_watcher_remote(false), m_watcher_init(false),
+          m_system_file(false), m_system_remote(false), m_system_init(false),
+          m_session_file(false), m_session_remote(false), m_session_ui(false), m_session_init(false),
+          m_dbName(dbName), m_dbCommon(dbCommon) {
+        
+        InitializeMagics();
+    }
+
+private:
+    void InitializeMagics() {
         string parts[];
         int count = StringSplit(m_targetMagics, ',', parts);
         for(int i = 0; i < count; i++) {
@@ -54,6 +71,8 @@ public:
             m_magics.Add(StringToInteger(s));
         }
     }
+
+public:
 
     virtual string GetTargetMagics() const override { return m_targetMagics; }
     virtual bool IsTargetMagic(long magic) const override {

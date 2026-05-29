@@ -22,6 +22,7 @@ public:
     virtual void   Pulse(ICXParam* xp) = 0;
     virtual void   ForceTransition(int state) = 0;
     virtual void   InjectState(ICXSignal* sig) = 0;
+    virtual bool   Bind() = 0; // [v2.0]
 };
 
 #endif

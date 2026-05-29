@@ -16,6 +16,7 @@ public:
     virtual void ForceState(int next_state) = 0;
     virtual void Build() = 0;
     virtual void ResetState() = 0;
+    virtual bool Bind() = 0;
 };
 
 #endif

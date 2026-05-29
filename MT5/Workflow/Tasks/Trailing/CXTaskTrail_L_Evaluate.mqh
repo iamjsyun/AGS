@@ -15,13 +15,21 @@
  */
 class CXTaskTrail_L_Evaluate : public IXTask {
 private:
-    ENUM_TRAIL_MODE m_mode;
+    ENUM_TRAIL_MODE   m_mode;
+    ICXPriceManager*  m_priceMgr;
+    ICXSymbolManager* m_symMgr;
 
 public:
-    CXTaskTrail_L_Evaluate(ENUM_TRAIL_MODE mode) : m_mode(mode) {}
+    CXTaskTrail_L_Evaluate(ENUM_TRAIL_MODE mode) : m_mode(mode), m_priceMgr(NULL), m_symMgr(NULL) {}
     
     virtual string Name() override { return (m_mode == TRAIL_MODE_ENTRY) ? "Trail_L_Evaluate_TE" : "Trail_L_Evaluate_TS"; }
     
+    virtual bool Bind(ICXContext* ctx) override {
+        m_priceMgr = CX_GET_OBJ(ctx, "price_mgr", ICXPriceManager);
+        m_symMgr = CX_GET_OBJ(ctx, "sym_mgr", ICXSymbolManager);
+        return IXTask::Bind(ctx);
+    }
+
     virtual int Execute(ICXParam* xp, ICXContext* ctx) override {
         ICXSignal* sig = xp.GetSignal();
         if(IS_INVALID(sig)) return TASK_CONTINUE;
@@ -36,12 +44,9 @@ public:
         int step = (m_mode == TRAIL_MODE_ENTRY) ? (int)sig.GetTEStep() : (int)sig.GetTSStep();
         if(step <= 0) return TASK_CONTINUE;
 
-        ICXPriceManager* priceMgr = CX_GET_OBJ(ctx, "price_mgr", ICXPriceManager);
-        ICXSymbolManager* symMgr = CX_GET_OBJ(ctx, "sym_mgr", ICXSymbolManager);
-        
-        double currentPrice = IS_VALID(priceMgr) ? priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir()) : 
+        double currentPrice = IS_VALID(m_priceMgr) ? m_priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir()) : 
                              SymbolInfoDouble(sig.GetSymbol(), (sig.GetDir() == CX_DIR_BUY) ? SYMBOL_BID : SYMBOL_ASK);
-        double point = IS_VALID(symMgr) ? symMgr.GetPoint(sig.GetSymbol()) : SymbolInfoDouble(sig.GetSymbol(), SYMBOL_POINT);
+        double point = IS_VALID(m_symMgr) ? m_symMgr.GetPoint(sig.GetSymbol()) : SymbolInfoDouble(sig.GetSymbol(), SYMBOL_POINT);
 
         double distance = 0;
         bool is_triggered = false;

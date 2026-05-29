@@ -15,13 +15,20 @@
  */
 class CXTaskTrail_R_Execute : public IXTask {
 private:
-    ENUM_TRAIL_MODE m_mode;
+    ENUM_TRAIL_MODE  m_mode;
+    IXOrderManager* m_orderMgr;
 
 public:
-    CXTaskTrail_R_Execute(ENUM_TRAIL_MODE mode) : m_mode(mode) {}
+    CXTaskTrail_R_Execute(ENUM_TRAIL_MODE mode) : m_mode(mode), m_orderMgr(NULL) {}
     
     virtual string Name() override { return (m_mode == TRAIL_MODE_ENTRY) ? "Trail_R_Execute_TE" : "Trail_R_Execute_TS"; }
     
+    virtual bool Bind(ICXContext* ctx) override {
+        m_orderMgr = CX_GET_OBJ(ctx, "order_mgr", IXOrderManager);
+        if(IS_INVALID(m_orderMgr)) return false;
+        return IXTask::Bind(ctx);
+    }
+
     virtual int Execute(ICXParam* xp, ICXContext* ctx) override {
         ICXSignal* sig = xp.GetSignal();
         int code = xp.GetInt();
@@ -29,20 +36,17 @@ public:
 
         if(m_mode == TRAIL_MODE_ENTRY && code == 10) {
             // [진트 실행] 대기 주문 취소 후 시장가 진입
-            IXOrderManager* orderMgr = CX_GET_OBJ(ctx, "order_mgr", IXOrderManager);
-            if(IS_INVALID(orderMgr)) return SESSION_ERROR;
-
             sig.SetStatusMsg("TE Rebound: Executing Market Entry...");
             
             // [v1.3.1 Fix] 보안 가드 우회를 위한 티켓/상태 초기화
             ulong oldTicket = (ulong)sig.GetTicket();
-            orderMgr.DeleteOrder(xp, oldTicket);
+            m_orderMgr.DeleteOrder(xp, oldTicket);
             
             sig.SetTicket(0);
             sig.SetStatus(XE_READY);
             sig.SetType(ORDER_MARKET);
             
-            if(orderMgr.ExecuteEntry(xp)) {
+            if(m_orderMgr.ExecuteEntry(xp)) {
                 sig.SetTag("ENTRY_TE_REBOUND");
                 XP_LOG_OK(xp, CXAuditFormatter::Build(Name(), xp, "TE Market Fallback Success."));
                 // 전이 코드 10 유지 (Orchestrator: POS_MONITORING 전이)

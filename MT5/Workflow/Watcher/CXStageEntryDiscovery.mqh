@@ -3,9 +3,9 @@
 
 #include "..\..\Core\Interfaces\IXStage.mqh"
 #include "..\..\Core\Interfaces\IRepository.mqh"
+#include "..\..\Core\Interfaces\ICXSequenceOrchestrator.mqh"
 #include "..\..\Core\Models\CXSignal.mqh"
 #include "..\..\Core\Macros\CXMacros.mqh"
-#include "..\..\Core\Sequence\CXSequenceOrchestrator.mqh"
 
 #include <Arrays\ArrayObj.mqh>
 
@@ -15,41 +15,40 @@
  */
 class CXStageEntryDiscovery : public IXStage {
 private:
-    bool     m_isPulsed;
+    bool                     m_isPulsed;
+    IRepository*             m_repo;
+    ICXSequenceOrchestrator* m_orchestrator;
 
 public:
-    CXStageEntryDiscovery() : m_isPulsed(false) {}
+    CXStageEntryDiscovery() : m_isPulsed(false), m_repo(NULL), m_orchestrator(NULL) {}
     virtual ~CXStageEntryDiscovery() {}
 
     virtual string Name() override { return "Stage_EntryDiscovery"; }
+
+    virtual bool Bind(ICXContext* ctx) override {
+        m_repo = CX_GET_OBJ(ctx, "repo", IRepository);
+        m_orchestrator = CX_GET_OBJ(ctx, "orchestrator", ICXSequenceOrchestrator);
+        if(IS_INVALID(m_repo) || IS_INVALID(m_orchestrator)) return false;
+        return IXStage::Bind(ctx);
+    }
 
     virtual bool OnCondition(ICXParam* xp, ICXContext* ctx, int current_state) override {
         return true; 
     }
 
     virtual int OnProcess(ICXParam* xp, ICXContext* ctx) override {
-        IRepository* repo = CX_GET_OBJ(ctx, "repo", IRepository);
-        if(IS_INVALID(repo)) return STATE_UNCHANGED;
-
         CArrayObj* activeList = new CArrayObj();
         
-        int found = repo.LoadEntrySignals(activeList);
+        int found = m_repo.LoadEntrySignals(activeList);
         if(found > 0) {
             XP_LOG_OK(xp, StringFormat("[WATCHER-ENTRY-DISCOVERY] Found %d active entry signals", found));
             ctx.Set("entry_signals", activeList);
             
-            CXSequenceOrchestrator* orchestrator = CX_GET_OBJ(ctx, "orchestrator", CXSequenceOrchestrator);
-            if(IS_VALID(orchestrator)) {
-                return orchestrator.ResolveId("WATCHER_ENTRY_EXECUTE");
-            }
+            return m_orchestrator.ResolveId("WATCHER_ENTRY_EXECUTE");
         }
 
         SAFE_DELETE(activeList);
-        CXSequenceOrchestrator* orchestrator = CX_GET_OBJ(ctx, "orchestrator", CXSequenceOrchestrator);
-        if(IS_VALID(orchestrator)) {
-            return orchestrator.ResolveId("WATCHER_EXIT_DISCOVERY");
-        }
-        return STATE_UNCHANGED;
+        return m_orchestrator.ResolveId("WATCHER_EXIT_DISCOVERY");
     }
 
     virtual void OnEnter(ICXContext* ctx) override {}

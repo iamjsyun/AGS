@@ -11,20 +11,28 @@
  * @brief [Verify] 터미널 내 실물 자산 소멸 확인 (L3 Verification)
  */
 class CXTaskExit_V_Terminal : public IXTask {
+private:
+    ICXAssetManager* m_invMgr;
+
 public:
     virtual string Name() override { return "Exit_V_Terminal"; }
+
+    virtual bool Bind(ICXContext* ctx) override {
+        m_invMgr = CX_GET_OBJ(ctx, "asset_mgr", ICXAssetManager);
+        if(IS_INVALID(m_invMgr)) return false;
+        return IXTask::Bind(ctx);
+    }
+
     virtual int Execute(ICXParam* xp, ICXContext* ctx) override {
         ICXSignal* sig = xp.GetSignal();
-        ICXAssetManager* invMgr = CX_GET_OBJ(ctx, "asset_mgr", ICXAssetManager);
-        
-        if(IS_INVALID(sig) || IS_INVALID(invMgr)) return TASK_BREAK;
+        if(IS_INVALID(sig)) return TASK_BREAK;
 
         ulong ticket = (ulong)sig.GetTicket();
         if(ticket <= 0) {
             return TASK_CONTINUE; 
         }
 
-        bool exists = invMgr.IsAssetExists(ticket, sig.GetType());
+        bool exists = m_invMgr.IsAssetExists(ticket, sig.GetType());
 
         if(exists) {
             IncrementRetry();

@@ -81,6 +81,14 @@ public:
       CXSignal* sig = CX_CAST(CXSignal, signal);
       if(IS_INVALID(sig)) return;
 
+      // [v20.1 Integrity Guard] Active Signal Overwrite Protection
+      // 이미 처리 중인 신호(Status 1~19)는 외부의 SaveSignal 호출로 인해 상태가 XE_READY(0)로 
+      // 초기화되는 것을 방지하여 중복 진입 및 시퀀스 오작동을 차단한다.
+      int currentStatus = GetStatusBySid(sig.GetSid());
+      if(currentStatus >= XE_PENDING_REQ && currentStatus < XE_CLOSED_SIGNAL) {
+          return; 
+      }
+
       string columns = "";
       string values = "";
 

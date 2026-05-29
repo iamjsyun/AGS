@@ -12,12 +12,21 @@
  * @brief [Persistence] DB 상태 최종 확정 (CLOSED)
  */
 class CXTaskExit_P_Finalize : public IXTask {
+private:
+    IRepository* m_repo;
+
 public:
     virtual string Name() override { return "Exit_P_Finalize"; }
+
+    virtual bool Bind(ICXContext* ctx) override {
+        m_repo = CX_GET_OBJ(ctx, "repo", IRepository);
+        if(IS_INVALID(m_repo)) return false;
+        return IXTask::Bind(ctx);
+    }
+
     virtual int Execute(ICXParam* xp, ICXContext* ctx) override {
         ICXSignal* sig = xp.GetSignal();
-        IRepository* repo = CX_GET_OBJ(ctx, "repo", IRepository);
-        if(IS_INVALID(sig) || IS_INVALID(repo)) return TASK_BREAK;
+        if(IS_INVALID(sig)) return TASK_BREAK;
 
         int finalStatus = sig.GetStatus();
         if(finalStatus < XE_CLOSED_SIGNAL) finalStatus = XE_CLOSED_SIGNAL;
@@ -27,7 +36,7 @@ public:
         XP_LOG_INFO(xp, CXAuditFormatter::Build("EXIT-P-FIN", xp, StringFormat("Exit Finalized: xa_exit=2, status=%d", finalStatus)));
 
         CXMessageProvider::UpdateStatus(sig, finalStatus, "Liquidation Finalized. Session Closed.");
-        if(repo.UpdateStatus(sig)) {
+        if(m_repo.UpdateStatus(sig)) {
             XP_LOG_OK(xp, CXAuditFormatter::Build("EXIT-P-FIN", xp, StringFormat("SUCCESS: Finalized as %d", finalStatus)));
             return SESSION_CLOSED;
         }

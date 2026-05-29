@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "_doc/LoggingDietPlan_v1.0.md",
+                "file": "_doc/TEST_EXECUTION_REPORT_v1.0.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "LoggingDietPlan_v1.0"
+              "title": "TEST_EXECUTION_REPORT_v1.0"
             }
           }
         ]
@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 422.5
   },
   "right": {
     "id": "52c1eea5fce6eb11",
@@ -183,20 +183,43 @@
       "bases:새 베이스 생성하기": false
     }
   },
-  "active": "359e3e0b1f91e9f0",
+  "active": "1539268d69c420f8",
   "lastOpenFiles": [
-    "MT5/AGS.ex5",
-    "scratch_rewrite_includes.py",
-    "compile_commands.json",
-    "MT5/Service/Execution/CXPositionManager.mqh",
-    "MT5/Service/Execution/CXOrderManager.mqh",
-    "MT5/Service/Execution/CXEntryManager.mqh",
-    "MT5/Service/Execution/CXExitManager.mqh",
-    "MT5/Service/Execution/CXTerminalPlatform.mqh",
-    "MT5/Workflow/Tasks/Trailing/CXTaskTrail_V_Extremum.mqh",
-    "MT5/Workflow/Tasks/Trailing/CXTaskTrail_V_Activate.mqh",
-    "MT5/Workflow/Tasks/Trailing/CXTaskTrail_R_Execute.mqh",
-    "_doc/ProjectAnalysisRefactoringPlan_v1.0.md",
-    "_doc/LoggingDietPlan_v1.0.md"
+    "MT5/_CXTradeTest/Scenarios/Scripts/Resilience/test_double_entry_race.tsdl",
+    "MT5/_CXTradeTest/Scenarios/Scripts/Resilience/test_broker_reject_entry.tsdl",
+    "MT5/_CXTradeTest/Scenarios/Scripts/Trade/test_slippage_control.tsdl",
+    "_doc/REFACTORING_AGS_V2_v1.0.md",
+    "_doc/TEST_EXECUTION_REPORT_v1.0.md",
+    "MT5/_CXTradeTest/UnitTests/TestIntentWatch.mqh",
+    "_doc/PLAN_TASK_UNIT_TEST_v1.2.md",
+    "_doc/DESIGN_AI_MODEL_MATRIX_v1.2.md",
+    "_doc/DESIGN_AI_MODEL_MATRIX_v1.1.md",
+    "_doc/DESIGN_AI_MODEL_MATRIX_v1.0.md",
+    "_log/build_test_runner.log",
+    "MT5/_CXTradeTest/UnitTests/TestExitWorkflow.mqh",
+    "MT5/_CXTradeTest/UnitTests/TestActiveSync.mqh",
+    "MT5/_CXTradeTest/UnitTests/TestPendingSync.mqh",
+    "MT5/_CXTradeTest/Mocks/MockExitManager.mqh",
+    "MT5/_CXTradeTest/Mocks/MockPositionManager.mqh",
+    "run_all_tests.ps1",
+    "_doc/DESIGN_SCENARIO_MANAGEMENT_v1.0.md",
+    "_doc/DESIGN_TEST_PROJECT_UPGRADE_v1.0.md",
+    "_doc/PLAN_AGS_v1.5.md",
+    "_doc/DESIGN_UNIVERSAL_DATA_PARAMETER_v1.0.md",
+    "_doc/DESIGN_SYSTEM_BOOTSTRAP_ISOLATION_v1.0.md",
+    "_doc/DESIGN_PRE_VALIDATED_BINDING_v1.0.md",
+    "_doc/DESIGN_INTEGRITY_GUARD_v1.0.md",
+    "_doc/DESIGN_FOLDER_STRUCTURE_v1.0.md",
+    "_doc/PLAN_AGS_TEST_PROJECT_v1.4.md",
+    "_doc/PLAN_AGS_MASTER_v1.5.md",
+    "_doc/PLAN_AGS_TEST_PROJECT_v1.5.md",
+    "_doc/PLAN_AGS_TEST_PROJECT_v1.2.md",
+    "_doc/PLAN_AGS_TEST_PROJECT_v1.3.md",
+    "_doc/TestAndRefactorPlan_v1.1.md",
+    "_doc/REPORT_TSDL_INTEGRITY_ANALYSIS_v1.0.md",
+    "_doc/PLAN_AGS_TEST_PROJECT_v1.0.md",
+    "_doc/PLAN_TEST_REFACTORING_v1.2.md",
+    "_doc/PLAN_AGS_TEST_PROJECT_v1.1.md",
+    "_doc/ProjectAnalysisRefactoringPlan_v1.0.md"
   ]
 }

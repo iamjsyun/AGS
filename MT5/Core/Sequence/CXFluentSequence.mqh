@@ -110,6 +110,23 @@ public:
         TriggerOnEnter(m_current_state);
     }
 
+    virtual bool Bind() override {
+        if(IS_INVALID(m_ctx)) return false;
+        int keys[];
+        CXStageNode* values[];
+        m_map.CopyTo(keys, values);
+        bool success = true;
+        for(int i = 0; i < ArraySize(values); i++) {
+            if(IS_VALID(values[i])) {
+                if(!values[i].stage.Bind(m_ctx)) {
+                    PrintFormat("[FATAL] Sequence Bind Failed in '%s': State ID %d, Stage '%s'", m_name, keys[i], values[i].stage.Name());
+                    success = false;
+                }
+            }
+        }
+        return success;
+    }
+
     virtual void ResetState() override {
         m_current_state = m_first_state;
         m_state_entered = TimeCurrent();

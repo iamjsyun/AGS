@@ -1,4 +1,4 @@
-﻿#ifndef CX_TASK_INTENT_WATCH_MQH
+#ifndef CX_TASK_INTENT_WATCH_MQH
 #define CX_TASK_INTENT_WATCH_MQH
 
 #include "..\..\..\Core\Interfaces\IXTask.mqh"
@@ -12,19 +12,28 @@
  * @brief 외부 강제 청산 의도 모니터링
  */
 class CXTaskIntentWatch : public IXTask {
+private:
+    IRepository*     m_repo;
+    ICXAssetManager* m_invMgr;
+
 public:
+    CXTaskIntentWatch() : m_repo(NULL), m_invMgr(NULL) {}
     virtual string Name() override { return "Task_IntentWatch"; }
+    
+    virtual bool Bind(ICXContext* ctx) override {
+        m_repo   = CX_GET_OBJ(ctx, "repo", IRepository);
+        m_invMgr = CX_GET_OBJ(ctx, "asset_mgr", ICXAssetManager);
+        return (m_repo != NULL && m_invMgr != NULL) && IXTask::Bind(ctx);
+    }
+
     virtual int Execute(ICXParam* xp, ICXContext* ctx) override {
         ICXSignal* sig = xp.GetSignal();
-        IRepository* repo = CX_GET_OBJ(ctx, "repo", IRepository);
-        ICXAssetManager* invMgr = CX_GET_OBJ(ctx, "asset_mgr", ICXAssetManager);
-        
-        if(IS_INVALID(sig) || IS_INVALID(repo)) return TASK_BREAK;
+        if(IS_INVALID(sig)) return TASK_BREAK;
 
         // [v14.3 Fast-Path] 터미널 수동 청산 감지 (좀비 세션 방지) -> [v16.11 Fast-Track Mandate]
         ulong ticket = (ulong)sig.GetTicket();
-        if(ticket > 0 && IS_VALID(invMgr)) {
-            if(!invMgr.IsAssetExists(ticket, sig.GetType())) {
+        if(ticket > 0) {
+            if(!m_invMgr.IsAssetExists(ticket, sig.GetType())) {
                 string manualCloseMsg = StringFormat("Manual Close Detected: Physical Asset(%I64u) disappeared.", ticket);
                 XP_LOG_WARN(xp, CXAuditFormatter::Build("INTENT-WATCH", xp, manualCloseMsg));
                 
@@ -34,14 +43,14 @@ public:
                 sig.SetStatusMsg(manualCloseMsg);
                 
                 // [v16.19] Use ForceUpdateIntent to explicitly override DB values (Bypass MAX guard)
-                if(IS_VALID(repo)) repo.ForceUpdateIntent(sig);
+                m_repo.ForceUpdateIntent(sig);
                 
                 return SESSION_CLOSED; // 즉시 세션 완전 종료 (SESSION_CLOSED)
             }
         }
 
         // [v14.1 Real-time Sync] DB에서 최신 신호 상태 재획득
-        ICXSignal* fresh = repo.GetSignalBySid(sig.GetSid());
+        ICXSignal* fresh = m_repo.GetSignalBySid(sig.GetSid());
         if(IS_VALID(fresh)) {
             // 외부에서의 청산 의도 주입 확인
             if(fresh.GetXAExit() == XA_ACTIVE && sig.GetXAExit() != XA_ACTIVE) {

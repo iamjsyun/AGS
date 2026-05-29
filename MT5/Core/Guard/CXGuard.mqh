@@ -9,20 +9,34 @@
 
 class CXGuard : public IXGuard {
 private:
-    ICXContext* m_ctx;
-    string m_lastError;
+    ICXContext*       m_ctx;
+    ICXConfig*        m_config;
+    ICXSymbolManager* m_symMgr;
+    string            m_lastError;
 
     bool SetError(string msg) { m_lastError = msg; return false; }
 
 public:
-    CXGuard(ICXContext* ctx) : m_ctx(ctx) { m_lastError = ""; }
+    CXGuard(ICXContext* ctx) : m_ctx(ctx), m_config(NULL), m_symMgr(NULL) { 
+        m_lastError = ""; 
+        Bind(ctx);
+    }
     virtual ~CXGuard() {}
+
+    virtual bool Bind(ICXContext* ctx) override {
+        m_ctx = ctx;
+        m_config = CX_GET_OBJ(ctx, "config", ICXConfig);
+        m_symMgr = CX_GET_OBJ(ctx, "sym_mgr", ICXSymbolManager);
+        // Note: config and symMgr might be NULL during early bootstrap, 
+        // but CXGuard is often created and registered before them.
+        return true; 
+    }
 
     // Identification Validation
     virtual bool ValidateMagic(long magic) {
-        ICXConfig* config = CX_GET_OBJ(m_ctx, "config", ICXConfig);
-        if(IS_INVALID(config)) return SetError("Config not found for Magic validation");
-        if(!config.IsTargetMagic(magic)) return SetError("Magic Number " + IntegerToString(magic) + " is not registered");
+        if(IS_INVALID(m_config)) m_config = CX_GET_OBJ(m_ctx, "config", ICXConfig);
+        if(IS_INVALID(m_config)) return SetError("Config not found for Magic validation");
+        if(!m_config.IsTargetMagic(magic)) return SetError("Magic Number " + IntegerToString(magic) + " is not registered");
         return true;
     }
 
@@ -49,16 +63,16 @@ public:
     virtual bool ValidateLot(string symbol, double lot) {
         if(symbol == "" || symbol == "NULL") return SetError("Symbol is empty");
         
-        ICXSymbolManager* symMgr = CX_GET_OBJ(m_ctx, "sym_mgr", ICXSymbolManager);
-        double min_v = IS_VALID(symMgr) ? symMgr.GetMinLot(symbol) : SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
-        double max_v = IS_VALID(symMgr) ? symMgr.GetMaxLot(symbol) : SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
+        if(IS_INVALID(m_symMgr)) m_symMgr = CX_GET_OBJ(m_ctx, "sym_mgr", ICXSymbolManager);
+        double min_v = IS_VALID(m_symMgr) ? m_symMgr.GetMinLot(symbol) : SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
+        double max_v = IS_VALID(m_symMgr) ? m_symMgr.GetMaxLot(symbol) : SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
         
         //-- [Fix] SYMBOL_VOLUME_MAX가 0인 경우 (심볼 미로드 또는 시장 미참여)
         if(max_v <= 0) {
             if(!SymbolSelect(symbol, true)) return SetError("Symbol " + symbol + " not found in Market Watch");
-            if(IS_VALID(symMgr)) symMgr.Refresh(symbol);
-            min_v = IS_VALID(symMgr) ? symMgr.GetMinLot(symbol) : SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
-            max_v = IS_VALID(symMgr) ? symMgr.GetMaxLot(symbol) : SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
+            if(IS_VALID(m_symMgr)) m_symMgr.Refresh(symbol);
+            min_v = IS_VALID(m_symMgr) ? m_symMgr.GetMinLot(symbol) : SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
+            max_v = IS_VALID(m_symMgr) ? m_symMgr.GetMaxLot(symbol) : SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
             if(max_v <= 0) return SetError(StringFormat("Symbol property error (%s). Max lot is 0.00", symbol));
         }
 
@@ -74,13 +88,13 @@ public:
     
     // Price & Point Processing
     virtual double PointsToPrice(string symbol, double points) const {
-        ICXSymbolManager* symMgr = CX_GET_OBJ(m_ctx, "sym_mgr", ICXSymbolManager);
+        ICXSymbolManager* symMgr = (IS_VALID(m_symMgr)) ? m_symMgr : CX_GET_OBJ(m_ctx, "sym_mgr", ICXSymbolManager);
         double pt = IS_VALID(symMgr) ? symMgr.GetPoint(symbol) : SymbolInfoDouble(symbol, SYMBOL_POINT);
         return points * pt;
     }
 
     virtual double NormalizePrice(string symbol, double price) const {
-        ICXSymbolManager* symMgr = CX_GET_OBJ(m_ctx, "sym_mgr", ICXSymbolManager);
+        ICXSymbolManager* symMgr = (IS_VALID(m_symMgr)) ? m_symMgr : CX_GET_OBJ(m_ctx, "sym_mgr", ICXSymbolManager);
         int digits = IS_VALID(symMgr) ? symMgr.GetDigits(symbol) : (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
         return NormalizeDouble(price, digits);
     }
@@ -88,9 +102,9 @@ public:
     virtual bool ValidateStopLevel(string symbol, double base_price, double target_price) {
         if(target_price <= 0) return true; // Ignore if not set
         
-        ICXSymbolManager* symMgr = CX_GET_OBJ(m_ctx, "sym_mgr", ICXSymbolManager);
-        double pt = IS_VALID(symMgr) ? symMgr.GetPoint(symbol) : SymbolInfoDouble(symbol, SYMBOL_POINT);
-        int stops = IS_VALID(symMgr) ? symMgr.GetStopsLevel(symbol) : (int)SymbolInfoInteger(symbol, SYMBOL_TRADE_STOPS_LEVEL);
+        if(IS_INVALID(m_symMgr)) m_symMgr = CX_GET_OBJ(m_ctx, "sym_mgr", ICXSymbolManager);
+        double pt = IS_VALID(m_symMgr) ? m_symMgr.GetPoint(symbol) : SymbolInfoDouble(symbol, SYMBOL_POINT);
+        int stops = IS_VALID(m_symMgr) ? m_symMgr.GetStopsLevel(symbol) : (int)SymbolInfoInteger(symbol, SYMBOL_TRADE_STOPS_LEVEL);
         double stops_lvl = (stops + 1) * pt;
         double diff = MathAbs(base_price - target_price);
         
