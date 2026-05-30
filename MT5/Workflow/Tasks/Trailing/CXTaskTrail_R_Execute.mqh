@@ -49,15 +49,14 @@ public:
             if(m_orderMgr.ExecuteEntry(xp)) {
                 sig.SetTag("ENTRY_TE_REBOUND");
                 XP_LOG_OK(xp, CXAuditFormatter::Build(Name(), xp, "TE Market Fallback Success."));
-                // 전이 코드 10 유지 (Orchestrator: POS_MONITORING 전이)
-                return TASK_CONTINUE;
+                // 전이 코드 10 반환 (Orchestrator: POS_MONITORING 전이)
+                return 10;
             }
         } else if(m_mode == TRAIL_MODE_EXIT && code == 20) {
             // [익트 실행] 
-            // 참고: Orchestrator가 20번 코드를 받아 SESSION_LIQUIDATING 단계로 자동 전이하므로 
-            // 여기서는 추가 로깅만 수행하거나 생략 가능합니다.
+            // 참고: Orchestrator가 20번 코드를 받아 SESSION_LIQUIDATING 단계로 자동 전이합니다.
             XP_LOG_INFO(xp, CXAuditFormatter::Build(Name(), xp, "TS Retraction Triggered. Transitioning to Liquidation..."));
-            return TASK_CONTINUE;
+            return 20;
         }
 
         return TASK_CONTINUE;
