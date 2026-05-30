@@ -1,0 +1,54 @@
+# AGS Syntax Check Script (cags.ps1)
+# Usage: ./cags.ps1
+
+$compilerPath = "C:\Program Files\XM Global MT5\MetaEditor64.exe"
+if (!(Test-Path -Path $compilerPath)) {
+    $compilerPath = "D:\Program Files\XM Global MT5\MetaEditor64.exe"
+}
+$projectPath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath "..\..\MT5\04_AppBootstrap\AGS.mq5"))
+$logDir = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath "..\..\_log"))
+
+# Create log directory if it doesn't exist
+if (!(Test-Path -Path $logDir)) {
+    New-Item -ItemType Directory -Path $logDir | Out-Null
+}
+
+$timestamp = Get-Date -Format "yyyyMMdd"
+$logFile = Join-Path -Path $logDir -ChildPath "check_$timestamp.log"
+
+# Delete existing log file if it exists
+if (Test-Path -Path $logFile) {
+    Remove-Item -Path $logFile
+}
+
+Write-Host "Checking syntax for: $projectPath" -ForegroundColor Cyan
+Write-Host "Log file: $logFile" -ForegroundColor Cyan
+
+# Execute syntax check (compile) synchronously and capture exit code (using correct MT5 parameter syntax)
+$process = Start-Process -FilePath $compilerPath -ArgumentList "/compile:$projectPath", "/log:$logFile" -Wait -NoNewWindow -PassThru
+$exitCode = $process.ExitCode
+
+# Determine success based on the log file contents ("0 errors") and process exit code
+$isSuccess = $false
+if (Test-Path -Path $logFile) {
+    $logContent = [System.IO.File]::ReadAllText($logFile, [System.Text.Encoding]::Unicode)
+    if ($logContent -match 'Result:\s+0\s+errors') {
+        $isSuccess = $true
+    }
+} else {
+    if ($exitCode -eq 1) {
+        $isSuccess = $true
+    }
+}
+
+if ($isSuccess) {
+    Write-Host "Syntax check passed." -ForegroundColor Green
+    exit 0
+} else {
+    Write-Host "Syntax check failed with exit code: $exitCode" -ForegroundColor Red
+    if (Test-Path -Path $logFile) {
+        Write-Host "--- Syntax Check Log ---" -ForegroundColor Yellow
+        Write-Host $logContent
+    }
+    exit 1
+}

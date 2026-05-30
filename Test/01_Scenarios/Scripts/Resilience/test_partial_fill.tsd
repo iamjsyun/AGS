@@ -1,0 +1,15 @@
+# test_partial_fill.tsd
+SCENARIO: SCEN_PARTIAL_FILL_01 : "Limit Order Partial Fill Dynamic Realignment"
+DEFINE: SYMBOL=GOLDF#, CNO=1007, SNO=01, GNO=01, DIR=1, TYPE=1
+
+PRICER: GOLDF# > TREND : trend_slope=0.0, jump_prob=0.0, start=2350.00, spread=20
+
+TICK: 1   > INJECT: signals : xa_entry=1, xa_exit=0, price_signal=2350.00, \
+                              cno=1007, sno=01, dir=1, type=1, lot=0.1, \
+                              te_start=300, te_step=100, te_limit=500
+TICK: 2   > INJECT: terminal: order_fill=false, ticket=88007
+          ? EXPECT: session : state=ORD_TRAILING
+
+# 단말에 0.05만 체결된 포지션으로 강제 갱신 주입
+TICK: 3   > INJECT: terminal: order_fill=true, ticket=88007, lot=0.05, price=2344.00
+          ? EXPECT: session : state=POS_ACTIVE * xe_status=XE_EXECUTED
