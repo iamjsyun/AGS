@@ -1,7 +1,21 @@
 # build_tests.ps1
-$compilerPath = "C:\Program Files\XM Global MT5\MetaEditor64.exe"
-if (!(Test-Path -Path $compilerPath)) {
-    $compilerPath = "D:\Program Files\XM Global MT5\MetaEditor64.exe"
+$compilerCandidates = @(
+    "C:\Program Files\XM Global MT5\MetaEditor64.exe",
+    "D:\Program Files\XM Global MT5\MetaEditor64.exe",
+    "C:\Program Files\MetaTrader 5\metaeditor64.exe",
+    "D:\Program Files\MetaTrader 5\metaeditor64.exe",
+    "C:\Program Files (x86)\MetaTrader 5\metaeditor64.exe"
+)
+$compilerPath = $null
+foreach ($path in $compilerCandidates) {
+    if (Test-Path -Path $path) {
+        $compilerPath = $path
+        break
+    }
+}
+if ($null -eq $compilerPath) {
+    Write-Host "ERROR: MetaEditor64.exe not found in any candidate paths!" -ForegroundColor Red
+    exit 1
 }
 
 $logDir = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath "..\..\_log"))
