@@ -58,6 +58,9 @@ public:
     virtual ulong GetLastResultOrder() = 0;
     virtual uint  GetLastRetCode() = 0;
     virtual string GetLastRetCodeDescription() = 0;
+
+    //--- 5. Mock Detection
+    virtual bool IsMock() { return false; }
 };
 
 #endif

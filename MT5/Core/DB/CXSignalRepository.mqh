@@ -1,4 +1,4 @@
-﻿//+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
 //|                                                      ProjectName |
 //|                                      Copyright 2020, CompanyName |
 //|                                       http://www.companyname.net |
@@ -64,6 +64,15 @@ private:
          }
       }
       return -1;
+   }
+
+   void RepositoryDebugLog(string msg) {
+      int h = FileOpen("debug_log.txt", FILE_WRITE|FILE_READ|FILE_TXT|FILE_ANSI);
+      if(h != INVALID_HANDLE) {
+         FileSeek(h, 0, SEEK_END);
+         FileWriteString(h, msg + "\r\n");
+         FileClose(h);
+      }
    }
 
 public:
@@ -241,23 +250,29 @@ public:
    }
 
    virtual ICXSignal* GetSignalBySid(const string sid) override {
-      if (IS_INVALID(m_db) || sid == "") return NULL;
-
-      if(m_hSignalBySid == INVALID_HANDLE) {
-         string sql = "SELECT * FROM signals WHERE sid = ?";
-         m_hSignalBySid = DatabasePrepare(m_db.GetHandle(), sql);
-         if(m_hSignalBySid == INVALID_HANDLE) return NULL;
-      } else {
-         DatabaseReset(m_hSignalBySid);
+      if (IS_INVALID(m_db) || sid == "") {
+         RepositoryDebugLog(StringFormat("[DB-DEBUG] GetSignalBySid: Aborted. m_db valid: %s, sid: '%s'", (string)IS_VALID(m_db), sid));
+         return NULL;
       }
 
-      DatabaseBind(m_hSignalBySid, 0, sid);
+      string sql = "SELECT * FROM signals WHERE sid = ?";
+      int hQuery = DatabasePrepare(m_db.GetHandle(), sql);
+      if(hQuery == INVALID_HANDLE) {
+         RepositoryDebugLog(StringFormat("[DB-DEBUG] GetSignalBySid: DatabasePrepare failed. Error code: %d, sql: '%s'", GetLastError(), sql));
+         return NULL;
+      }
+
+      DatabaseBind(hQuery, 0, sid);
       
       CArrayObj list;
-      if (FetchSignals(m_hSignalBySid, GetPointer(list)) > 0) {
-         return CX_CAST(ICXSignal, list.Detach(0));
+      ICXSignal* sig = NULL;
+      int count = FetchSignals(hQuery, GetPointer(list));
+      RepositoryDebugLog(StringFormat("[DB-DEBUG] GetSignalBySid: sid='%s', FetchSignals count: %d", sid, count));
+      if (count > 0) {
+         sig = CX_CAST(ICXSignal, list.Detach(0));
       }
-      return NULL;
+      DatabaseFinalize(hQuery);
+      return sig;
    }
 
 private:

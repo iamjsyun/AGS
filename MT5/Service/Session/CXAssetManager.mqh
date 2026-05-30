@@ -278,14 +278,16 @@ virtual bool ExecuteExit(ICXParam* xp, string sid) override {
     }
 
     virtual void Pulse(ICXParam* xp) override {
+        // [v1.0 Priority Scan] Scan and bind terminal assets BEFORE pulsing sessions to avoid stale state checks
+        if(IS_VALID(m_orderMgr)) m_orderMgr.ScanAndBind(xp, GetPointer(this));
+        if(IS_VALID(m_posMgr))   m_posMgr.ScanAndBind(xp, GetPointer(this));
+
         int total = m_tasks.Total();
         for(int i = 0; i < total; i++) {
             ICXTradingSession* session = CX_CAST(ICXTradingSession, m_tasks.At(i));
             if(IS_VALID(session)) { if(IS_VALID(xp)) xp.Reset(); session.Pulse(xp); }
         }
         PurgeInactiveTasks();
-        if(IS_VALID(m_orderMgr)) m_orderMgr.ScanAndBind(xp, GetPointer(this));
-        if(IS_VALID(m_posMgr))   m_posMgr.ScanAndBind(xp, GetPointer(this));
 
         // [v11.4 Mandate] Dangling Pointer Protection
         if(IS_VALID(xp)) {

@@ -1,4 +1,4 @@
-﻿#ifndef CXPOSITIONMANAGER_MQH
+#ifndef CXPOSITIONMANAGER_MQH
 #define CXPOSITIONMANAGER_MQH
 
 #include "..\..\Core\Interfaces\IXPositionManager.mqh"
@@ -11,6 +11,7 @@
 #include "..\..\Core\Logger\CXMessageProvider.mqh"
 #include "..\..\Core\Logger\CXAuditFormatter.mqh"
 #include "..\..\Core\Interfaces\IXTerminalPlatform.mqh"
+#include "..\..\_Test\Mocks\MockTerminalPlatform.mqh"
 
 /**
  * @class CXPositionManager
@@ -164,6 +165,81 @@ public:
         ICXAssetManager* mgr = CX_CAST(ICXAssetManager, sessionMgr);
         if(!CXLogDispatcher::IsOk(mgr)) return;
 
+        // [v1.0 Mock Bypass] Scan mock assets directly if in Mock environment
+        MockTerminalPlatform* mockTerminal = NULL;
+        if(m_terminal != NULL && m_terminal.IsMock()) {
+            mockTerminal = (MockTerminalPlatform*)m_terminal;
+        }
+        if(IS_VALID(mockTerminal)) {
+            CArrayObj* assets = mockTerminal.GetAssets();
+            if(IS_VALID(assets)) {
+                int total = assets.Total();
+                for(int i = 0; i < total; i++) {
+                    MockAsset* asset = CX_CAST(MockAsset, assets.At(i));
+                    if(IS_INVALID(asset) || !asset.is_position) continue;
+
+                    ulong ticket = asset.ticket;
+                    long magic = asset.magic;
+                    string sid = asset.sid;
+
+                    ICXConfig* cfg = CX_GET_OBJ(m_ctx, "config", ICXConfig);
+                    if(CXLogDispatcher::IsOk(cfg) && !cfg.IsTargetMagic(magic)) continue;
+
+                    ICXTradingSession* existing = mgr.FindSessionBySid(sid);
+                    if(!CXLogDispatcher::IsOk(existing)) {
+                        IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
+                        if(!CXLogDispatcher::IsOk(repo)) continue;
+
+                        ICXSignal* sig = repo.GetSignalBySid(sid);
+                        if(!CXLogDispatcher::IsOk(sig)) continue;
+
+                        if(sig.GetStatus() >= XE_CLOSED_SIGNAL) {
+                            SAFE_DELETE(sig);
+                            continue;
+                        }
+
+                        sig.SetTicket(ticket);
+                        sig.SetStatus(XE_EXECUTED);
+                        sig.SetStatusMsg(StringFormat("Position Scanned and Bound. Ticket:%I64u", ticket));
+                        repo.UpdateStatus(sig);
+
+                        xp.SetSignal(sig);
+                        if(CXLogDispatcher::IsOk(mgr)) {
+                            ICXTradingSession* session = mgr.CreateSession(xp);
+                            if(CXLogDispatcher::IsOk(session)) {
+                                session.Start(xp);
+                                XP_LOG_OK(xp, StringFormat("[POS-MANAGER-SCAN] Bound new active position to session. Ticket:%I64u, SID:%s", ticket, sid));
+                            } else {
+                                SAFE_DELETE(sig);
+                            }
+                        } else {
+                            SAFE_DELETE(sig);
+                        }
+                        xp.SetSignal(NULL);
+                    } else {
+                        ICXSignal* sig = existing.GetSignal();
+                        if(CXLogDispatcher::IsOk(sig) && sig.GetTicket() != ticket) {
+                            sig.SetTicket(ticket);
+                            if(sig.GetStatus() < XE_EXECUTED) {
+                                sig.SetTag("LIMIT_FILL");
+                                sig.SetStatus(XE_EXECUTED);
+                                sig.SetStatusMsg(StringFormat("Limit Fill Detected. Ticket:%I64u", ticket));
+                                
+                                IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
+                                if(CXLogDispatcher::IsOk(repo)) repo.UpdateStatus(sig);
+                                XP_LOG_OK(xp, StringFormat("[POS-MANAGER-SCAN] Limit Order Filled. Tag:LIMIT_FILL, Ticket:%I64u, SID:%s", ticket, sid));
+                            } else {
+                                IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
+                                if(CXLogDispatcher::IsOk(repo)) repo.UpdateStatus(sig);
+                            }
+                        }
+                    }
+                }
+            }
+            if(CXLogDispatcher::IsOk(xp)) xp.SetSignal(NULL);
+            return;
+        }
+
         int total = m_terminal.GetPositionsTotal();
         for(int i = 0; i < total; i++) {
             // [v18.25] Scan by indexing terminal positions
@@ -217,6 +293,7 @@ public:
                 // If session exists, ensure the signal ticket is up to date (mapping pending order ticket to active position ticket)
                 ICXSignal* sig = existing.GetSignal();
                 if(CXLogDispatcher::IsOk(sig) && sig.GetTicket() != ticket) {
+                    sig.SetTicket(ticket);
                     if(sig.GetStatus() < XE_EXECUTED) {
                         sig.SetTag("LIMIT_FILL"); // [v1.0] 진입 경로 태깅 (지정가 체결)
                         sig.SetStatus(XE_EXECUTED);
@@ -225,8 +302,10 @@ public:
                         IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
                         if(CXLogDispatcher::IsOk(repo)) repo.UpdateStatus(sig);
                         XP_LOG_OK(xp, StringFormat("[POS-MANAGER-SCAN] Limit Order Filled. Tag:LIMIT_FILL, Ticket:%I64u, SID:%s", ticket, sid));
+                    } else {
+                        IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
+                        if(CXLogDispatcher::IsOk(repo)) repo.UpdateStatus(sig);
                     }
-                    sig.SetTicket(ticket);
                 }
             }
         }

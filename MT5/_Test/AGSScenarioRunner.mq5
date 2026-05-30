@@ -75,6 +75,9 @@ string XeStatusEnumToName(int status) {
         case 5:  return "XE_PENDING_PLACED";
         case 10: return "XE_EXECUTED";
         case 20: return "XE_CLOSED_SIGNAL";
+        case 21: return "XE_CLOSED_SL";
+        case 22: return "XE_CLOSED_TP";
+        case 24: return "XE_CLOSED_MANUAL";
         case 99: return "XE_ERROR";
         default: return "UNKNOWN_" + IntegerToString(status);
     }
@@ -247,9 +250,7 @@ void HandleAction(CXTsdlAction* action) {
     if(IS_INVALID(action)) return;
 
     if(action.m_type == "MARKET") {
-        if(action.m_target == "price") {
-            g_pricer.OverridePrice(action.GetParamDouble("price"));
-        }
+        g_pricer.OverridePrice(action.GetParamDouble("price"));
     }
     else if(action.m_type == "INJECT") {
         if(action.m_target == "terminal") {
@@ -328,6 +329,7 @@ void VerifyExpectation(CXTsdlExpect* expect, int tick) {
     if(expect.m_type == "session") {
         string sid = ResolveSid(expect.GetParam("sid"));
         
+        DebugLog(StringFormat("[RUNNER-DEBUG] VerifyExpectation: sid='%s', g_repo pointer type: %d", sid, CheckPointer(g_repo)));
         ICXSignal* sig = (IS_VALID(g_repo)) ? g_repo.GetSignalBySid(sid) : NULL;
         
         if(IS_INVALID(sig)) {
@@ -343,6 +345,9 @@ void VerifyExpectation(CXTsdlExpect* expect, int tick) {
                 if(expXe == "XE_READY") expXeVal = 0;
                 else if(expXe == "XE_EXECUTED") expXeVal = 10;
                 else if(expXe == "XE_CLOSED_SIGNAL") expXeVal = 20;
+                else if(expXe == "XE_CLOSED_SL") expXeVal = 21;
+                else if(expXe == "XE_CLOSED_TP") expXeVal = 22;
+                else if(expXe == "XE_CLOSED_MANUAL") expXeVal = 24;
                 else if(expXe == "XE_ERROR") expXeVal = 99;
                 else if(expXe == "XE_PENDING_PLACED") expXeVal = 5;
                 else expXeVal = (int)StringToInteger(expXe);
@@ -391,10 +396,14 @@ void VerifyExpectation(CXTsdlExpect* expect, int tick) {
 
     if(passed) {
         g_passed++;
-        PrintFormat("[TICK:%d] PASS: %s", tick, expect.m_type);
+        string msg = StringFormat("[TICK:%d] PASS: %s", tick, expect.m_type);
+        Print(msg);
+        DebugLog(msg);
     } else {
         g_failed++;
-        PrintFormat("[TICK:%d] FAIL: %s -> %s %s", tick, expect.m_type, expect.m_failMsg, failDetails);
+        string msg = StringFormat("[TICK:%d] FAIL: %s -> %s %s", tick, expect.m_type, expect.m_failMsg, failDetails);
+        Print(msg);
+        DebugLog(msg);
     }
 }
 
@@ -422,16 +431,21 @@ void ExecuteTick(int tick) {
         DebugLog(StringFormat("  ExecuteTick(%d) - Actions handled", tick));
     }
 
-    // 2. Update Virtual World
-    DebugLog(StringFormat("  ExecuteTick(%d) - Updating Virtual World", tick));
+    // 2. Update Virtual World Exits (SL/TP)
+    DebugLog(StringFormat("  ExecuteTick(%d) - Updating Virtual World Exits", tick));
     g_pricer.GenerateNextPrice();
     g_mockTerminal.UpdateBrokerTriggeredExits("GOLDF#", g_pricer.GetBid(), g_pricer.GetAsk());
-    DebugLog(StringFormat("  ExecuteTick(%d) - Virtual World updated", tick));
+    DebugLog(StringFormat("  ExecuteTick(%d) - Virtual World Exits updated", tick));
 
     // 3. App Heartbeat
     DebugLog(StringFormat("  ExecuteTick(%d) - Calling g_app.Pulse", tick));
     g_app.Pulse(EVENT_TIMER);
     DebugLog(StringFormat("  ExecuteTick(%d) - g_app.Pulse finished", tick));
+
+    // 3.5 Update Virtual World Fills (Pending Orders Limit/Stop)
+    DebugLog(StringFormat("  ExecuteTick(%d) - Updating Virtual World Fills", tick));
+    g_mockTerminal.UpdateBrokerTriggeredFills("GOLDF#", g_pricer.GetBid(), g_pricer.GetAsk());
+    DebugLog(StringFormat("  ExecuteTick(%d) - Virtual World Fills updated", tick));
     
     // 4. Verify Expectations
     if(IS_VALID(step)) {

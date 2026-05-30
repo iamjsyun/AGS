@@ -15,6 +15,7 @@
 #include "..\..\Core\Macros\CXMacros.mqh"
 #include "..\..\Core\Logger\CXMessageProvider.mqh"
 #include "..\..\Core\Interfaces\IXTerminalPlatform.mqh"
+#include "..\..\_Test\Mocks\MockTerminalPlatform.mqh"
 
 /**
  * @class CXOrderManager
@@ -378,6 +379,82 @@ public:
         ICXAssetManager* mgr = CX_CAST(ICXAssetManager, sessionMgr);
         if(IS_INVALID(mgr)) return;
 
+        // [v1.0 Mock Bypass] Scan mock assets directly if in Mock environment
+        MockTerminalPlatform* mockTerminal = NULL;
+        if(m_terminal != NULL && m_terminal.IsMock()) {
+            mockTerminal = (MockTerminalPlatform*)m_terminal;
+        }
+        if(IS_VALID(mockTerminal)) {
+            CArrayObj* assets = mockTerminal.GetAssets();
+            if(IS_VALID(assets)) {
+                int total = assets.Total();
+                for(int i = 0; i < total; i++) {
+                    MockAsset* asset = CX_CAST(MockAsset, assets.At(i));
+                    if(IS_INVALID(asset) || asset.is_position) continue;
+
+                    ulong ticket = asset.ticket;
+                    long magic = asset.magic;
+                    string sid = asset.sid;
+
+                    ICXConfig* cfg = CX_GET_OBJ(m_ctx, "config", ICXConfig);
+                    if(IS_VALID(cfg) && !cfg.IsTargetMagic(magic)) continue;
+
+                    ICXTradingSession* existing = mgr.FindSessionBySid(sid);
+                    if(IS_INVALID(existing)) {
+                        IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
+                        if(IS_INVALID(repo)) continue;
+
+                        ICXSignal* sig = repo.GetSignalBySid(sid);
+                        if(IS_INVALID(sig)) continue;
+
+                        if(sig.GetStatus() >= XE_CLOSED_SIGNAL) {
+                            SAFE_DELETE(sig);
+                            continue;
+                        }
+
+                        sig.SetTicket(ticket);
+                        sig.SetStatus(XE_PENDING_PLACED);
+                        sig.SetStatusMsg(StringFormat("Order Scanned and Bound. Ticket:%I64u", ticket));
+                        repo.UpdateStatus(sig);
+
+                        xp.SetSignal(sig);
+                        if(IS_VALID(mgr)) {
+                            ICXTradingSession* session = mgr.CreateSession(xp);
+                            if(IS_VALID(session)) {
+                                session.Start(xp);
+                                XP_LOG_OK(xp, StringFormat("[ORDER-MANAGER-SCAN] Successfully bound new pending order. Ticket:%I64u, SID:%s", ticket, sid));
+                            } else {
+                                SAFE_DELETE(sig);
+                            }
+                        } else {
+                            SAFE_DELETE(sig);
+                        }
+                        xp.SetSignal(NULL);
+                    } else {
+                        ICXSignal* sig = existing.GetSignal();
+                        if(IS_VALID(sig)) {
+                            bool changed = false;
+                            if(sig.GetTicket() != ticket) {
+                                sig.SetTicket(ticket);
+                                changed = true;
+                            }
+                            if(sig.GetStatus() < XE_PENDING_PLACED) {
+                                sig.SetStatus(XE_PENDING_PLACED);
+                                sig.SetStatusMsg(StringFormat("Order placement confirmed. Ticket:%I64u", ticket));
+                                changed = true;
+                            }
+                            if(changed) {
+                                IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
+                                if(IS_VALID(repo)) repo.UpdateStatus(sig);
+                            }
+                        }
+                    }
+                }
+            }
+            if(IS_VALID(xp)) xp.SetSignal(NULL);
+            return;
+        }
+
         int total = m_terminal.GetOrdersTotal();
         for(int i = 0; i < total; i++) {
             // [v18.25] Scan by indexing terminal orders
@@ -431,8 +508,21 @@ public:
             } else {
                 // If session exists, ensure the signal ticket is up to date without logging every scan
                 ICXSignal* sig = existing.GetSignal();
-                if(IS_VALID(sig) && sig.GetTicket() != ticket) {
-                    sig.SetTicket(ticket);
+                if(IS_VALID(sig)) {
+                    bool changed = false;
+                    if(sig.GetTicket() != ticket) {
+                        sig.SetTicket(ticket);
+                        changed = true;
+                    }
+                    if(sig.GetStatus() < XE_PENDING_PLACED) {
+                        sig.SetStatus(XE_PENDING_PLACED);
+                        sig.SetStatusMsg(StringFormat("Order placement confirmed. Ticket:%I64u", ticket));
+                        changed = true;
+                    }
+                    if(changed) {
+                        IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
+                        if(IS_VALID(repo)) repo.UpdateStatus(sig);
+                    }
                 }
             }
         }

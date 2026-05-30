@@ -190,9 +190,12 @@ public:
             return;
         }
         
+        // [v1.0 Test Mode Bypass] E2E scenario testing uses 0.5s virtual interval
+        bool isTest = (IS_VALID(m_config) && m_config.GetTimerInterval() < 1.0);
+        
         // 2. OnTimer Heartbeat Path
         // A. Watcher Scan (400ms)
-        if(currentTick - m_lastWatcherScanTime >= 400) {
+        if(isTest || currentTick - m_lastWatcherScanTime >= 400) {
             AppServiceDebugLog("  AppService::Pulse - Watcher Scan Begin");
             m_pulseParam.Reset();
             m_pulseParam.SetEvent(EVENT_TIMER);
@@ -202,7 +205,7 @@ public:
         }
         
         // B. Core Pulse (300ms)
-        if(currentTick - m_lastAssetPulseTime >= 300) {
+        if(isTest || currentTick - m_lastAssetPulseTime >= 300) {
             AppServiceDebugLog("  AppService::Pulse - Core Pulse Begin");
             m_pulseParam.Reset();
             m_pulseParam.SetEvent(EVENT_TIMER);
@@ -212,8 +215,8 @@ public:
             m_lastAssetPulseTime = currentTick;
         }
 
-        // C. UI Refresh (1000ms)
-        if(currentTick - m_lastUiRefreshTime >= 500) {
+        // C. UI Refresh (500ms)
+        if(isTest || currentTick - m_lastUiRefreshTime >= 500) {
             AppServiceDebugLog("  AppService::Pulse - UI Refresh Begin");
             if(IS_VALID(m_ui)) m_ui.Refresh();
             AppServiceDebugLog("  AppService::Pulse - UI Refresh End");

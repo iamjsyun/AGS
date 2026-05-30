@@ -34,13 +34,31 @@ public:
         ulong ticket = (ulong)sig.GetTicket();
         if(ticket > 0) {
             if(!m_invMgr.IsAssetExists(ticket, sig.GetType())) {
-                string manualCloseMsg = StringFormat("Manual Close Detected: Physical Asset(%I64u) disappeared.", ticket);
-                XP_LOG_WARN(xp, CXAuditFormatter::Build("INTENT-WATCH", xp, manualCloseMsg));
+                string reason = "";
+                int closeStatus = m_invMgr.CheckHistoryClosure(ticket, reason);
+
+                int finalStatus = XE_CLOSED_MANUAL;
+                string statusMsg = "";
+
+                if(closeStatus == XE_CLOSED_SL) {
+                    finalStatus = XE_CLOSED_SL;
+                    statusMsg = StringFormat("Broker SL Triggered: Physical Asset(%I64u) closed. Reason: %s", ticket, reason);
+                } else if(closeStatus == XE_CLOSED_TP) {
+                    finalStatus = XE_CLOSED_TP;
+                    statusMsg = StringFormat("Broker TP Triggered: Physical Asset(%I64u) closed. Reason: %s", ticket, reason);
+                } else if(closeStatus == XE_CLOSED_SIGNAL) {
+                    finalStatus = XE_CLOSED_SIGNAL;
+                    statusMsg = StringFormat("Signal Closed: Physical Asset(%I64u) closed. Reason: %s", ticket, reason);
+                } else {
+                    finalStatus = XE_CLOSED_MANUAL;
+                    statusMsg = StringFormat("Manual Close Detected: Physical Asset(%I64u) disappeared.", ticket);
+                }
+
+                XP_LOG_WARN(xp, CXAuditFormatter::Build("INTENT-WATCH", xp, statusMsg));
                 
-                // 직권으로 xe_status=24 및 xa_exit=2 동시 마킹하여 즉시 종료 확정
-                sig.SetStatus(XE_CLOSED_MANUAL);
+                sig.SetStatus(finalStatus);
                 sig.SetXAExit(XA_CLOSED_COMPLETED);
-                sig.SetStatusMsg(manualCloseMsg);
+                sig.SetStatusMsg(statusMsg);
                 
                 // [v16.19] Use ForceUpdateIntent to explicitly override DB values (Bypass MAX guard)
                 m_repo.ForceUpdateIntent(sig);

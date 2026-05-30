@@ -79,18 +79,30 @@ public:
     CArrayObj* GetAssets() { return m_assets; }
     CArrayObj* GetHistory() { return m_history; }
     void SetFailNextTrade(bool fail) { m_failNextTrade = fail; }
+    virtual bool IsMock() override { return true; }
 
     /**
      * @brief 강제로 특정 자산 상태를 터미널 환경에 수동 주입 (TCL INJECT: terminal 대응)
      */
     void InjectMockAsset(bool order_fill, ulong ticket, string sid, string symbol, int magic, int dir, double lot, double price, double sl, double tp) {
+        double old_price = 0.0;
+        double old_sl = 0.0;
+        double old_tp = 0.0;
+
         // 이미 해당 ticket이나 sid를 가진 자산이 존재하면 삭제
         for(int i = m_assets.Total() - 1; i >= 0; i--) {
             MockAsset* asset = (MockAsset*)m_assets.At(i);
             if(asset.sid == sid || (ticket > 0 && asset.ticket == ticket)) {
+                old_price = asset.price;
+                old_sl = asset.sl;
+                old_tp = asset.tp;
                 m_assets.Delete(i);
             }
         }
+
+        double final_price = (price > 0.0) ? price : old_price;
+        double final_sl = (sl > 0.0) ? sl : old_sl;
+        double final_tp = (tp > 0.0) ? tp : old_tp;
 
         if(order_fill) {
             // 포지션으로 주입
@@ -102,78 +114,66 @@ public:
             asset.lot = lot;
             asset.dir = dir;
             asset.type = (dir == CX_DIR_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
-            asset.price = price;
-            asset.sl = sl;
-            asset.tp = tp;
+            asset.price = final_price;
+            asset.sl = final_sl;
+            asset.tp = final_tp;
             asset.is_position = true;
             asset.comment = sid;
             m_assets.Add(asset);
-            PrintFormat("[MOCK-TERM] Injected Position: Ticket:%I64u, SID:%s, Lot:%.2f, Price:%.5f", asset.ticket, sid, lot, price);
+            PrintFormat("[MOCK-TERM] Injected Position: Ticket:%I64u, SID:%s, Lot:%.2f, Price:%.5f", asset.ticket, sid, lot, final_price);
         } else {
-            // ticket > 0 인데 order_fill=false 라면, 해당 ticket을 강제 청산(역사 기록) 처리하여 자산 증발을 모의
+            // ticket > 0 인데 order_fill=false 라면 대기 주문(Pending Order)으로 주입
             if(ticket > 0) {
-                MockHistory* hist = new MockHistory();
-                hist.ticket = ticket;
-                hist.reason = "Closed by Manual (MOCK)";
-                hist.closeStatus = XE_CLOSED_MANUAL;
-                m_history.Add(hist);
-                PrintFormat("[MOCK-TERM] Injected Manual Exit History for Ticket:%I64u", ticket);
+                MockAsset* asset = new MockAsset();
+                asset.ticket = ticket;
+                asset.sid = sid;
+                asset.symbol = symbol;
+                asset.magic = magic;
+                asset.lot = lot;
+                asset.dir = dir;
+                asset.type = (dir == CX_DIR_BUY) ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT;
+                asset.price = final_price;
+                asset.sl = final_sl;
+                asset.tp = final_tp;
+                asset.is_position = false;
+                asset.comment = sid;
+                m_assets.Add(asset);
+                PrintFormat("[MOCK-TERM] Injected Pending Order: Ticket:%I64u, SID:%s, Lot:%.2f, Price:%.5f", asset.ticket, sid, lot, final_price);
             }
         }
     }
 
     /**
-     * @brief 가상 가격 생성기의 Bid/Ask에 의한 손절/익절 브로커 트리거
+     * @brief 가상 가격 생성기의 Bid/Ask에 의한 손절/익절 브로커 트리거 (포지션 전용)
      */
     void UpdateBrokerTriggeredExits(string symbol, double bid, double ask) {
         for(int i = m_assets.Total() - 1; i >= 0; i--) {
             MockAsset* asset = (MockAsset*)m_assets.At(i);
-            if(asset.symbol != symbol) continue;
+            if(asset.symbol != symbol || !asset.is_position) continue;
 
             bool triggered = false;
             int status = XE_UNKNOWN;
             string reason = "";
 
-            if(asset.is_position) {
-                if(asset.dir == CX_DIR_BUY) {
-                    if(asset.sl > 0 && bid <= asset.sl) {
-                        triggered = true;
-                        status = XE_CLOSED_SL;
-                        reason = "sl [sl]";
-                    } else if(asset.tp > 0 && bid >= asset.tp) {
-                        triggered = true;
-                        status = XE_CLOSED_TP;
-                        reason = "tp [tp]";
-                    }
-                } else { // SELL
-                    if(asset.sl > 0 && ask >= asset.sl) {
-                        triggered = true;
-                        status = XE_CLOSED_SL;
-                        reason = "sl [sl]";
-                    } else if(asset.tp > 0 && ask <= asset.tp) {
-                        triggered = true;
-                        status = XE_CLOSED_TP;
-                        reason = "tp [tp]";
-                    }
+            if(asset.dir == CX_DIR_BUY) {
+                if(asset.sl > 0 && bid <= asset.sl) {
+                    triggered = true;
+                    status = XE_CLOSED_SL;
+                    reason = "sl [sl]";
+                } else if(asset.tp > 0 && bid >= asset.tp) {
+                    triggered = true;
+                    status = XE_CLOSED_TP;
+                    reason = "tp [tp]";
                 }
-            } else {
-                // 대기주문 체결 확인 (Limit/Stop 체결)
-                // Buy Limit: ask <= price
-                // Sell Limit: bid >= price
-                if(asset.type == ORDER_TYPE_BUY_LIMIT) {
-                    if(ask <= asset.price) {
-                        // 체결: 대기 오더를 포지션으로 전환
-                        asset.is_position = true;
-                        asset.price = ask; // 체결가
-                        PrintFormat("[MOCK-BROKER] Pending BUY_LIMIT ticket %I64u filled at %.5f", asset.ticket, ask);
-                    }
-                } else if(asset.type == ORDER_TYPE_SELL_LIMIT) {
-                    if(bid >= asset.price) {
-                        // 체결
-                        asset.is_position = true;
-                        asset.price = bid; // 체결가
-                        PrintFormat("[MOCK-BROKER] Pending SELL_LIMIT ticket %I64u filled at %.5f", asset.ticket, bid);
-                    }
+            } else { // SELL
+                if(asset.sl > 0 && ask >= asset.sl) {
+                    triggered = true;
+                    status = XE_CLOSED_SL;
+                    reason = "sl [sl]";
+                } else if(asset.tp > 0 && ask <= asset.tp) {
+                    triggered = true;
+                    status = XE_CLOSED_TP;
+                    reason = "tp [tp]";
                 }
             }
 
@@ -186,6 +186,30 @@ public:
 
                 PrintFormat("[MOCK-BROKER] Position Ticket %I64u closed by SL/TP. Reason: %s", asset.ticket, reason);
                 m_assets.Delete(i);
+            }
+        }
+    }
+
+    /**
+     * @brief 가상 가격 생성기의 Bid/Ask에 의한 대기주문 체결 브로커 트리거
+     */
+    void UpdateBrokerTriggeredFills(string symbol, double bid, double ask) {
+        for(int i = m_assets.Total() - 1; i >= 0; i--) {
+            MockAsset* asset = (MockAsset*)m_assets.At(i);
+            if(asset.symbol != symbol || asset.is_position) continue;
+
+            if(asset.type == ORDER_TYPE_BUY_LIMIT) {
+                if(ask <= asset.price) {
+                    asset.is_position = true;
+                    asset.price = ask; // 체결가
+                    PrintFormat("[MOCK-BROKER] Pending BUY_LIMIT ticket %I64u filled at %.5f", asset.ticket, ask);
+                }
+            } else if(asset.type == ORDER_TYPE_SELL_LIMIT) {
+                if(bid >= asset.price) {
+                    asset.is_position = true;
+                    asset.price = bid; // 체결가
+                    PrintFormat("[MOCK-BROKER] Pending SELL_LIMIT ticket %I64u filled at %.5f", asset.ticket, bid);
+                }
             }
         }
     }

@@ -90,9 +90,7 @@ public:
         string keys[]; CObject* vals[];
         m_resources.CopyTo(keys, vals);
         for(int i = 0; i < ArraySize(keys); i++) {
-            bool managed = false;
-            m_managedFlags.TryGetValue(keys[i], managed);
-            child.Register(keys[i], vals[i], managed);
+            child.Register(keys[i], vals[i], false); // Child context must not manage/delete parent resources
         }
         return child;
     }
