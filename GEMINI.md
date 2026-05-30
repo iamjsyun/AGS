@@ -3,6 +3,8 @@
 ## Design Documentation Standard (v1.0)
 - **PDCA/Design Storage**: 모든 설계 문서(.md)는 `_doc/` 폴더 최상위 또는 주제별 서브폴더에 저장하여 전 프로젝트가 공유한다.
 - **Version Control**: 문서 파일명에는 반드시 `v1.x` 형태의 버전을 포함한다.
+- **File Naming**: 문서 파일명은 반드시 파일 이름 끝에 버전 정보를 포함해야 함 (`*_v1.x.md`). 예: `ANALYSIS_CODEBASE_INTEGRITY_v1.1.md`
+- **Incremental Updates**: 아티팩트(설계 문서, 분석 보고서 등) 갱신 시 이전 버전의 핵심 내용을 최대한 유지하며, 새로운 내용을 하단에 추가(Append)하거나 섹션을 구분하여 누적 관리한다.
 
 
 ## Trading Logging Standard (v11.1 - Extended)
@@ -70,3 +72,7 @@
 - **Execution Mode**: All trading operations must operate in "Caveman" mode, ensuring minimal dependency on external libraries and maximum reliance on explicit, low-level MQL5 code.
 - **Safety Protocol**: Every transaction must include an explicit safety guard and confirmation check before execution.
 - **Resource Management**: Strictly manage all memory and handles; no automatic resource cleanup is permitted without explicit validation.
+
+## Testing & Verification Standard (v1.0)
+- **Execution Policy**: 모든 테스트 스크립트(Unit Tests, E2E Scenarios 등)는 개발자의 임의 실행을 금지하며, 오직 사용자의 명시적인 실행 요청이 있을 때에만 실행한다.
+
