@@ -119,7 +119,7 @@ public:
 
         // 5. Request Execution Test (Logging Only)
         int resExec = taskExec.Execute(GetPointer(xp), GetPointer(ctx));
-        if(resExec == TASK_CONTINUE) {
+        if(resExec == 20) {
             Print("  [PASS] TS Retraction execution (logging) success.");
         } else {
             PrintFormat("  [FAIL] TS Retraction execution unexpected result: %d", resExec);

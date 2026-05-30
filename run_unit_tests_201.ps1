@@ -1,5 +1,5 @@
-# AGS Unit Test Suite Runner (run_unit_tests.ps1)
-# Usage: powershell -File ./run_unit_tests.ps1
+# AGS Unit Test Suite Runner (run_unit_tests_201.ps1)
+# Usage: powershell -File ./run_unit_tests_201.ps1
 
 $TerminalPath = "C:\Program Files\XM Global MT5\terminal64.exe"
 $CommonPath = "$env:APPDATA\MetaQuotes\Terminal\Common\Files\AGS"
@@ -26,9 +26,9 @@ function Clear-ResultFile {
 # 0. Clean up existing terminal instances before run
 Kill-Terminal
 
-Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "AGS Unit Test Suite Runner (run_unit_tests.ps1)" -ForegroundColor Cyan
-Write-Host "==================================================" -ForegroundColor Cyan
+Write-Host "=================================================="
+Write-Host "AGS Unit Test Suite Runner (run_unit_tests_201.ps1)"
+Write-Host "=================================================="
 
 # Prepare Database
 $dbDir = Split-Path -Path $CommonPath

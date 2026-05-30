@@ -70,7 +70,7 @@ $failedCount = 0
 foreach ($scen in $manifest.scenarios) {
     $totalCount++
     $scenId = $scen.id
-    $scenRelFile = "AGS\" + $scen.file.Replace("/", "\")
+    $scenRelFile = "AGS/" + $scen.file
     
     Write-Host "[$totalCount/$($manifest.scenarios.Count)] Running Scenario: $scenId ($scenRelFile)" -ForegroundColor Cyan
     

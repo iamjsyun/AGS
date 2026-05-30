@@ -61,7 +61,7 @@ if ($selectedScenario -eq $null) {
 
 $scenId = $selectedScenario.id
 $scenFile = $selectedScenario.file
-$scenRelFile = "AGS\" + $scenFile.Replace("/", "\")
+$scenRelFile = "AGS/" + $scenFile
 
 # 0. Clean up existing terminal instances before run
 Kill-Terminal

@@ -1,7 +1,10 @@
 # AGS Build Script (bags.ps1)
 # Usage: ./bags.ps1
 
-$compilerPath = "D:\Program Files\XM Global MT5\MetaEditor64.exe"
+$compilerPath = "C:\Program Files\XM Global MT5\MetaEditor64.exe"
+if (!(Test-Path -Path $compilerPath)) {
+    $compilerPath = "D:\Program Files\XM Global MT5\MetaEditor64.exe"
+}
 $projectPath = Join-Path -Path $PSScriptRoot -ChildPath "MT5\AGS.mq5"
 $logDir = Join-Path -Path $PSScriptRoot -ChildPath "_log"
 

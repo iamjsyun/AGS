@@ -49,18 +49,31 @@ int OnInit() {
     int failed = 0;
     
     // Run Scenarios
-    if (TestEntryValidate::Run()) passed++; else failed++;
-    if (TestSequenceDSL::Run()) passed++; else failed++;
-    if (TestIntegritySimulation::Run()) passed++; else failed++;
-    if (TestRedirectRecovery::Run()) passed++; else failed++;
-    if (TestTrailingEntry::Run()) passed++; else failed++;
-    if (TestTrailingStop::Run()) passed++; else failed++;
-    if (TestManualExitBypass::Run()) passed++; else failed++;
-    if (TestPendingSync::Run()) passed++; else failed++;
-    if (TestActiveSync::Run()) passed++; else failed++;
-    if (TestExitWorkflow::Run()) passed++; else failed++;
-    if (TestIntentWatch::Run()) passed++; else failed++;
-    if (TestPVBIntegrity::Run()) passed++; else failed++;
+    bool r_EntryValidate = TestEntryValidate::Run();
+    bool r_SequenceDSL = TestSequenceDSL::Run();
+    bool r_IntegritySimulation = TestIntegritySimulation::Run();
+    bool r_RedirectRecovery = TestRedirectRecovery::Run();
+    bool r_TrailingEntry = TestTrailingEntry::Run();
+    bool r_TrailingStop = TestTrailingStop::Run();
+    bool r_ManualExitBypass = TestManualExitBypass::Run();
+    bool r_PendingSync = TestPendingSync::Run();
+    bool r_ActiveSync = TestActiveSync::Run();
+    bool r_ExitWorkflow = TestExitWorkflow::Run();
+    bool r_IntentWatch = TestIntentWatch::Run();
+    bool r_PVBIntegrity = TestPVBIntegrity::Run();
+
+    if (r_EntryValidate) passed++; else failed++;
+    if (r_SequenceDSL) passed++; else failed++;
+    if (r_IntegritySimulation) passed++; else failed++;
+    if (r_RedirectRecovery) passed++; else failed++;
+    if (r_TrailingEntry) passed++; else failed++;
+    if (r_TrailingStop) passed++; else failed++;
+    if (r_ManualExitBypass) passed++; else failed++;
+    if (r_PendingSync) passed++; else failed++;
+    if (r_ActiveSync) passed++; else failed++;
+    if (r_ExitWorkflow) passed++; else failed++;
+    if (r_IntentWatch) passed++; else failed++;
+    if (r_PVBIntegrity) passed++; else failed++;
     
     // Add more test classes here...
     
@@ -75,6 +88,18 @@ int OnInit() {
         FileWriteString(resHandle, StringFormat("passed=%d\r\n", passed));
         FileWriteString(resHandle, StringFormat("failed=%d\r\n", failed));
         FileWriteString(resHandle, StringFormat("status=%s\r\n", (failed == 0) ? "PASSED" : "FAILED"));
+        FileWriteString(resHandle, StringFormat("TestEntryValidate=%s\r\n", r_EntryValidate ? "OK" : "FAIL"));
+        FileWriteString(resHandle, StringFormat("TestSequenceDSL=%s\r\n", r_SequenceDSL ? "OK" : "FAIL"));
+        FileWriteString(resHandle, StringFormat("TestIntegritySimulation=%s\r\n", r_IntegritySimulation ? "OK" : "FAIL"));
+        FileWriteString(resHandle, StringFormat("TestRedirectRecovery=%s\r\n", r_RedirectRecovery ? "OK" : "FAIL"));
+        FileWriteString(resHandle, StringFormat("TestTrailingEntry=%s\r\n", r_TrailingEntry ? "OK" : "FAIL"));
+        FileWriteString(resHandle, StringFormat("TestTrailingStop=%s\r\n", r_TrailingStop ? "OK" : "FAIL"));
+        FileWriteString(resHandle, StringFormat("TestManualExitBypass=%s\r\n", r_ManualExitBypass ? "OK" : "FAIL"));
+        FileWriteString(resHandle, StringFormat("TestPendingSync=%s\r\n", r_PendingSync ? "OK" : "FAIL"));
+        FileWriteString(resHandle, StringFormat("TestActiveSync=%s\r\n", r_ActiveSync ? "OK" : "FAIL"));
+        FileWriteString(resHandle, StringFormat("TestExitWorkflow=%s\r\n", r_ExitWorkflow ? "OK" : "FAIL"));
+        FileWriteString(resHandle, StringFormat("TestIntentWatch=%s\r\n", r_IntentWatch ? "OK" : "FAIL"));
+        FileWriteString(resHandle, StringFormat("TestPVBIntegrity=%s\r\n", r_PVBIntegrity ? "OK" : "FAIL"));
         FileClose(resHandle);
     }
     
