@@ -111,7 +111,8 @@ private:
         string requirements[] = {
             "config", "logger", "orchestrator", "guard", 
             "db", "repo", "asset_mgr", "price_mgr", 
-            "sym_mgr", "risk_mgr", "exit_mgr", "terminal_platform"
+            "sym_mgr", "risk_mgr", "exit_mgr", "terminal_platform",
+            "order_mgr", "pos_mgr"
         };
 
         bool allPresent = true;

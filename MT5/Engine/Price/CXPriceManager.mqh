@@ -30,6 +30,7 @@ private:
 public:
     CXPriceManager(ICXContext* ctx) : m_ctx(ctx) {}
     virtual ~CXPriceManager() {}
+    void SetContext(ICXContext* ctx) { m_ctx = ctx; }
 
     /**
      * @brief 방향에 따른 실시간 시장가 추출 (Ask/Bid)

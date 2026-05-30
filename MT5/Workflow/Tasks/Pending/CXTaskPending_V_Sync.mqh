@@ -1,4 +1,4 @@
-﻿#ifndef CX_TASK_PENDING_V_SYNC_MQH
+#ifndef CX_TASK_PENDING_V_SYNC_MQH
 #define CX_TASK_PENDING_V_SYNC_MQH
 
 #include "..\..\..\Core\Interfaces\IXTask.mqh"
@@ -21,7 +21,7 @@ public:
     virtual bool Bind(ICXContext* ctx) override {
         m_invMgr = CX_GET_OBJ(ctx, "asset_mgr", ICXAssetManager);
         m_repo = CX_GET_OBJ(ctx, "repo", IRepository);
-        if(IS_INVALID(m_repo)) return false;
+        if(IS_INVALID(m_repo) || IS_INVALID(m_invMgr)) return false;
         return IXTask::Bind(ctx);
     }
 
@@ -36,14 +36,12 @@ public:
         }
 
         // 1. 상태 동기화 (오더 -> 포지션 전환 감지)
-        if(IS_VALID(m_invMgr)) {
-            ulong ticket = (ulong)sig.GetTicket();
-            if(ticket > 0 && m_invMgr.IsPositionExists(ticket)) {
-                XP_LOG_OK(xp, CXAuditFormatter::Build("PENDING-V-SYNC", xp, StringFormat("Order filled! Ticket:%I64u is now a Position.", ticket)));
-                CXMessageProvider::UpdateStatus(sig, XE_EXECUTED, "Pending Order Filled");
-                m_repo.UpdateStatus(sig);
-                return SESSION_ACTIVE;
-            }
+        ulong ticket = (ulong)sig.GetTicket();
+        if(ticket > 0 && m_invMgr.IsPositionExists(ticket)) {
+            XP_LOG_OK(xp, CXAuditFormatter::Build("PENDING-V-SYNC", xp, StringFormat("Order filled! Ticket:%I64u is now a Position.", ticket)));
+            CXMessageProvider::UpdateStatus(sig, XE_EXECUTED, "Pending Order Filled");
+            m_repo.UpdateStatus(sig);
+            return SESSION_ACTIVE;
         }
 
         if(sig.GetStatus() == XE_ERROR) {

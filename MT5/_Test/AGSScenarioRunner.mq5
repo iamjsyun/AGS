@@ -32,7 +32,6 @@ input int    InpMaxTicks      = 100;                           // Safety Break
 //--- Global Instances
 CXTsdlScenario*        g_scenario = NULL;
 CXVirtualPricer*      g_pricer = NULL;
-MockPriceManager*     g_mockPriceMgr = NULL; 
 MockTerminalPlatform* g_mockTerminal = NULL; 
 CXTestServiceFactory* g_factory = NULL;      
 CXAppService*         g_app = NULL;          
@@ -95,7 +94,32 @@ public:
     CXTsdlTraceEntry() : tick(0), expState(""), actState(-1), expXe(""), actXe(-1), isPass(false), failMsg("") {}
 };
 
+void CloseAllChartsExceptCurrent() {
+    long currChart = ChartID();
+    long chartId = ChartFirst();
+    int limit = 100;
+    while(chartId >= 0 && limit > 0) {
+        long nextChart = ChartNext(chartId);
+        if(chartId != currChart) {
+            ChartClose(chartId);
+        }
+        chartId = nextChart;
+        limit--;
+    }
+}
+
 int OnInit() {
+    // Clear debug log on start
+    int clearHandle = FileOpen("debug_log.txt", FILE_WRITE|FILE_TXT|FILE_ANSI);
+    if(clearHandle != INVALID_HANDLE) {
+        FileWriteString(clearHandle, "--- New Run Start ---\r\n");
+        FileClose(clearHandle);
+    } else {
+        Print("[DEBUGLOG-ERR] Failed to clear debug_log.txt. Code: ", GetLastError());
+    }
+    
+    DebugLog("OnInit() - Start");
+    CloseAllChartsExceptCurrent();
     string scenFile = InpScenarioFile;
     
     // 임시 타겟 파일 존재 시 읽어서 우선 적용 (배치 자동화용)
@@ -134,10 +158,8 @@ int OnInit() {
     g_pricer = new CXVirtualPricer("GOLDF#", 0.01);
     g_pricer.InitModel(g_scenario.m_pricerModel, 2350.00, 2);
 
-    g_mockPriceMgr = new MockPriceManager(NULL);
-    g_mockPriceMgr.SetPricer(g_pricer);
     g_mockTerminal = new MockTerminalPlatform();
-    g_factory = new CXTestServiceFactory(g_mockPriceMgr, g_mockTerminal);
+    g_factory = new CXTestServiceFactory(g_pricer, g_mockTerminal);
     
     g_config = new CXConfig("1001", 0.5, "127.0.0.1", false, false, "*", LOG_LVL_TRACE, true, false, true, true, false, true, true, false, false, true, InpDatabaseName, InpUseCommonPath);
     g_app = new CXAppService();
@@ -193,6 +215,34 @@ void OnDeinit(const int reason) {
     SAFE_DELETE(g_traces);
 }
 
+string ResolveSid(string actionSid) {
+    string sid = actionSid;
+    StringTrimLeft(sid); StringTrimRight(sid);
+    if(sid != "") return sid;
+    
+    if(g_scenario == NULL) return "";
+    
+    sid = g_scenario.GetDefine("SID");
+    StringTrimLeft(sid); StringTrimRight(sid);
+    if(sid != "") return sid;
+    
+    string cnoStr = g_scenario.GetDefine("CNO");
+    long cnoVal = StringToInteger(cnoStr);
+    if(cnoVal > 0) {
+        string yymmddhh = g_lastYymmddhh;
+        if(yymmddhh == "") yymmddhh = g_scenario.GetDefine("YYMMDDHH");
+        if(yymmddhh == "") yymmddhh = "26052804"; // fallback
+        
+        sid = StringFormat("%04d-%s-%02d-%02d-%d-%d", 
+                           (int)cnoVal, yymmddhh,
+                           (int)StringToInteger(g_scenario.GetDefine("SNO")), 
+                           (int)StringToInteger(g_scenario.GetDefine("GNO")),
+                           (int)StringToInteger(g_scenario.GetDefine("DIR")), 
+                           (int)StringToInteger(g_scenario.GetDefine("TYPE")));
+    }
+    return sid;
+}
+
 void HandleAction(CXTsdlAction* action) {
     if(IS_INVALID(action)) return;
 
@@ -204,9 +254,10 @@ void HandleAction(CXTsdlAction* action) {
     else if(action.m_type == "INJECT") {
         if(action.m_target == "terminal") {
             string sym = action.GetParam("symbol"); if(sym == "") sym = "GOLDF#";
+            string sid = ResolveSid(action.GetParam("sid"));
             g_mockTerminal.InjectMockAsset(action.GetParamBool("order_fill"),
                                            (ulong)action.GetParamInt("ticket"),
-                                           action.GetParam("sid"),
+                                           sid,
                                            sym,
                                            action.GetParamInt("magic", 1001),
                                            action.GetParamInt("dir", 1),
@@ -222,11 +273,18 @@ void HandleAction(CXTsdlAction* action) {
             string sid = action.GetParam("sid");
             string yymmddhh_action = action.GetParam("yymmddhh");
             if(yymmddhh_action != "") g_lastYymmddhh = yymmddhh_action;  // [v2.3] 추적
-            if(sid == "" && action.GetParamInt("cno") > 0) {
-                sid = StringFormat("%04d-%s-%02d-%02d-%d-%d", 
-                                   action.GetParamInt("cno"), action.GetParam("yymmddhh"),
-                                   action.GetParamInt("sno"), action.GetParamInt("gno"),
-                                   action.GetParamInt("dir", 1), action.GetParamInt("type", 0));
+            if(sid == "") {
+                if(action.GetParamInt("cno") > 0) {
+                    string yymmdd = action.GetParam("yymmddhh");
+                    if(yymmdd == "") yymmdd = g_lastYymmddhh;
+                    if(yymmdd == "") yymmdd = "26052804";
+                    sid = StringFormat("%04d-%s-%02d-%02d-%d-%d", 
+                                       action.GetParamInt("cno"), yymmdd,
+                                       action.GetParamInt("sno"), action.GetParamInt("gno"),
+                                       action.GetParamInt("dir", 1), action.GetParamInt("type", 0));
+                } else {
+                    sid = ResolveSid("");
+                }
             }
             sig.SetSid(sid);
             
@@ -268,30 +326,7 @@ void VerifyExpectation(CXTsdlExpect* expect, int tick) {
     string failDetails = "";
 
     if(expect.m_type == "session") {
-        string sid = expect.GetParam("sid");
-        if(sid == "") sid = g_scenario.GetDefine("SID");
-        
-        // [v2.1] Auto-Assemble SID from components if still missing
-        if(sid == "") {
-            string cnoStr = g_scenario.GetDefine("CNO");
-            long cnoVal = StringToInteger(cnoStr);
-            PrintFormat("[SID-DEBUG] CNO='%s'(%d), g_lastYymmddhh='%s', SNO='%s', GNO='%s', DIR='%s', TYPE='%s'",
-                cnoStr, (int)cnoVal,
-                g_lastYymmddhh,
-                g_scenario.GetDefine("SNO"), g_scenario.GetDefine("GNO"),
-                g_scenario.GetDefine("DIR"), g_scenario.GetDefine("TYPE"));
-            if(cnoVal > 0) {
-                // [v2.3] g_lastYymmddhh 우선, 없으면 DEFINE, 없으면 "26052804" fallback
-                string yymmddhh = g_lastYymmddhh;
-                if(yymmddhh == "") yymmddhh = g_scenario.GetDefine("YYMMDDHH");
-                if(yymmddhh == "") yymmddhh = "26052804";
-                
-                sid = StringFormat("%04d-%s-%02d-%02d-%d-%d", 
-                                   (int)cnoVal, yymmddhh,
-                                   (int)StringToInteger(g_scenario.GetDefine("SNO")), (int)StringToInteger(g_scenario.GetDefine("GNO")),
-                                   (int)StringToInteger(g_scenario.GetDefine("DIR")), (int)StringToInteger(g_scenario.GetDefine("TYPE")));
-            }
-        }
+        string sid = ResolveSid(expect.GetParam("sid"));
         
         ICXSignal* sig = (IS_VALID(g_repo)) ? g_repo.GetSignalBySid(sid) : NULL;
         
@@ -363,33 +398,59 @@ void VerifyExpectation(CXTsdlExpect* expect, int tick) {
     }
 }
 
+void DebugLog(string msg) {
+    int h = FileOpen("debug_log.txt", FILE_WRITE|FILE_READ|FILE_TXT|FILE_ANSI);
+    if(h != INVALID_HANDLE) {
+        FileSeek(h, 0, SEEK_END);
+        FileWriteString(h, msg + "\r\n");
+        FileClose(h);
+    } else {
+        Print("[DEBUGLOG-ERR] Failed to write debug_log.txt. Code: ", GetLastError());
+    }
+}
+
 void ExecuteTick(int tick) {
+    DebugLog(StringFormat("ExecuteTick(%d) - Start", tick));
     CXTsdlStep* step = g_scenario.GetStep(tick);
     
     // 1. Apply Actions
     if(IS_VALID(step)) {
+        DebugLog(StringFormat("  ExecuteTick(%d) - Handling %d actions", tick, step.m_actions.Total()));
         for(int i = 0; i < step.m_actions.Total(); i++) {
             HandleAction(CX_CAST(CXTsdlAction, step.m_actions.At(i)));
         }
+        DebugLog(StringFormat("  ExecuteTick(%d) - Actions handled", tick));
     }
 
     // 2. Update Virtual World
+    DebugLog(StringFormat("  ExecuteTick(%d) - Updating Virtual World", tick));
     g_pricer.GenerateNextPrice();
     g_mockTerminal.UpdateBrokerTriggeredExits("GOLDF#", g_pricer.GetBid(), g_pricer.GetAsk());
+    DebugLog(StringFormat("  ExecuteTick(%d) - Virtual World updated", tick));
 
     // 3. App Heartbeat
+    DebugLog(StringFormat("  ExecuteTick(%d) - Calling g_app.Pulse", tick));
     g_app.Pulse(EVENT_TIMER);
+    DebugLog(StringFormat("  ExecuteTick(%d) - g_app.Pulse finished", tick));
     
     // 4. Verify Expectations
     if(IS_VALID(step)) {
+        DebugLog(StringFormat("  ExecuteTick(%d) - Verifying %d expectations", tick, step.m_expectations.Total()));
         for(int i = 0; i < step.m_expectations.Total(); i++) {
             VerifyExpectation(CX_CAST(CXTsdlExpect, step.m_expectations.At(i)), tick);
         }
+        DebugLog(StringFormat("  ExecuteTick(%d) - Expectations verified", tick));
     }
+    DebugLog(StringFormat("ExecuteTick(%d) - End", tick));
 }
 
 void OnTimer() {
     g_currentTick++;
-    if(g_currentTick > g_maxTick) { ExpertRemove(); return; }
+    DebugLog(StringFormat("OnTimer() - Tick:%d, MaxTick:%d", g_currentTick, g_maxTick));
+    if(g_currentTick > g_maxTick) {
+        DebugLog("OnTimer() - MaxTick reached, removing expert");
+        ExpertRemove();
+        return;
+    }
     ExecuteTick(g_currentTick);
 }

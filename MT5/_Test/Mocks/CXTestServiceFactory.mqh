@@ -9,6 +9,8 @@
 #include "..\..\Service\App\CXServiceFactory.mqh"
 #include "MockPriceManager.mqh"
 #include "MockTerminalPlatform.mqh"
+#include "MockSymbolManager.mqh"
+#include "..\Scenarios\CXVirtualPricer.mqh"
 
 /**
  * @class CXTestServiceFactory
@@ -16,23 +18,24 @@
  */
 class CXTestServiceFactory : public CXServiceFactory {
 private:
-    MockPriceManager*     m_mockPriceMgr;
+    CXVirtualPricer*      m_pricer;
     MockTerminalPlatform* m_mockTerminal;
 
 public:
-    CXTestServiceFactory(MockPriceManager* priceMgr, MockTerminalPlatform* terminal) 
-        : m_mockPriceMgr(priceMgr), m_mockTerminal(terminal) {}
+    CXTestServiceFactory(CXVirtualPricer* pricer, MockTerminalPlatform* terminal) 
+        : m_pricer(pricer), m_mockTerminal(terminal) {}
 
     virtual ~CXTestServiceFactory() override {
-        // AppService가 m_priceManager와 m_terminalPlatform의 소유권을 가져가 해제하므로,
-        // 이중 해제(Double Free) 방지를 위해 여기서는 삭제하지 않음
+        // Life of m_pricer and m_mockTerminal managed by runner
     }
 
     /**
      * @brief MockPriceManager 주입
      */
     virtual ICXPriceManager* CreatePriceManager(ICXContext* ctx) override {
-        return m_mockPriceMgr;
+        MockPriceManager* pm = new MockPriceManager(ctx);
+        pm.SetPricer(m_pricer);
+        return pm;
     }
 
     /**
@@ -40,6 +43,13 @@ public:
      */
     virtual IXTerminalPlatform* CreateTerminalPlatform(ICXContext* ctx) override {
         return m_mockTerminal;
+    }
+
+    /**
+     * @brief MockSymbolManager 주입
+     */
+    virtual ICXSymbolManager* CreateSymbolManager(ICXContext* ctx) override {
+        return new MockSymbolManager();
     }
 };
 

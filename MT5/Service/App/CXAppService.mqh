@@ -23,6 +23,8 @@
 #include "CXServiceFactory.mqh"
 #include "..\..\Core\Models\CXConfig.mqh"
 #include "..\..\Core\Guard\CXIntegrityGuard.mqh"
+#include "..\..\Core\Interfaces\IXOrderManager.mqh"
+#include "..\..\Core\Interfaces\IXPositionManager.mqh"
 
 #include "..\..\Core\UI\CXUI.mqh"
 
@@ -50,6 +52,8 @@ private:
     ICXSymbolManager*     m_symbolManager;
     ICXRiskManager*       m_riskManager;
     IXExitManager*        m_exitManager;
+    IXOrderManager*       m_orderManager;
+    IXPositionManager*    m_positionManager;
     CXUI*                 m_ui;
     ICXIntegrityGuard*    m_integrityGuard; // [v2.1] Independent Inspector
 
@@ -63,7 +67,8 @@ public:
                     m_factory(NULL), m_watcher(NULL), m_logger(NULL), m_globalContext(NULL),
                     m_orchestrator(NULL), m_guard(NULL), m_terminalPlatform(NULL),
                     m_priceManager(NULL), m_symbolManager(NULL), m_riskManager(NULL),
-                    m_exitManager(NULL), m_ui(NULL), m_integrityGuard(NULL),
+                    m_exitManager(NULL), m_orderManager(NULL), m_positionManager(NULL),
+                    m_ui(NULL), m_integrityGuard(NULL),
                     m_lastWatcherScanTime(0), m_lastAssetPulseTime(0), m_lastUiRefreshTime(0) {}
 
     virtual ~CXAppService() override {
@@ -74,6 +79,8 @@ public:
         // [v2.2 Fix] exit_mgr을 Context가 소유하지 않도록 managed=false로 등록 후 여기서 명시적 삭제
         // CHashMap<string,CObject*>::CopyTo 한계로 CXContext가 정상 삭제하지 못하는 문제 향구쳐
         SAFE_DELETE(m_exitManager);
+        SAFE_DELETE(m_orderManager);
+        SAFE_DELETE(m_positionManager);
         SAFE_DELETE(m_globalContext);
     }
 
@@ -102,8 +109,6 @@ public:
         m_symbolManager = m_factory.CreateSymbolManager(m_globalContext);
         m_priceManager = m_factory.CreatePriceManager(m_globalContext);
         m_riskManager = m_factory.CreateRiskManager(m_globalContext);
-        m_exitManager = m_factory.CreateExitManager(m_globalContext);
-        m_pulseParam = new CXParam();
 
         m_globalContext.Register("logger", m_logger, true);
         m_globalContext.Register("global_logger", m_logger, false); // [v18.32] For cross-module system logging (alias, do not delete)
@@ -114,7 +119,15 @@ public:
         m_globalContext.Register("sym_mgr", m_symbolManager, true);
         m_globalContext.Register("price_mgr", m_priceManager, true);
         m_globalContext.Register("risk_mgr", m_riskManager, true);
+
+        m_exitManager = m_factory.CreateExitManager(m_globalContext);
+        m_orderManager = m_factory.CreateOrderManager(m_globalContext);
+        m_positionManager = m_factory.CreatePositionManager(m_globalContext);
+        m_pulseParam = new CXParam();
+
         m_globalContext.Register("exit_mgr", m_exitManager, false);  // [v2.2] 소유권은 m_exitManager에 유지, Context는 참조만
+        m_globalContext.Register("order_mgr", m_orderManager, false); // [v2.2] 소유권은 m_orderManager에 유지, Context는 참조만
+        m_globalContext.Register("pos_mgr", m_positionManager, false); // [v2.2] 소유권은 m_positionManager에 유지, Context는 참조만
 
         m_db = m_factory.CreateDatabase();
         if(IS_INVALID(m_db) || !m_db.Open(m_config.GetDatabaseName(), m_config.IsDatabaseCommon())) return false;
@@ -154,6 +167,15 @@ public:
         return true;
     }
 
+    void AppServiceDebugLog(string msg) {
+        int h = FileOpen("debug_log.txt", FILE_WRITE|FILE_READ|FILE_TXT|FILE_ANSI);
+        if(h != INVALID_HANDLE) {
+            FileSeek(h, 0, SEEK_END);
+            FileWriteString(h, msg + "\r\n");
+            FileClose(h);
+        }
+    }
+
     virtual void Pulse(ENUM_CX_EVENT event = EVENT_TIMER) override {
         if(IS_INVALID(m_pulseParam)) return;
         
@@ -171,24 +193,30 @@ public:
         // 2. OnTimer Heartbeat Path
         // A. Watcher Scan (400ms)
         if(currentTick - m_lastWatcherScanTime >= 400) {
+            AppServiceDebugLog("  AppService::Pulse - Watcher Scan Begin");
             m_pulseParam.Reset();
             m_pulseParam.SetEvent(EVENT_TIMER);
             if(IS_VALID(m_watcher)) m_watcher.Pulse(m_pulseParam);
+            AppServiceDebugLog("  AppService::Pulse - Watcher Scan End");
             m_lastWatcherScanTime = currentTick;
         }
         
         // B. Core Pulse (300ms)
         if(currentTick - m_lastAssetPulseTime >= 300) {
+            AppServiceDebugLog("  AppService::Pulse - Core Pulse Begin");
             m_pulseParam.Reset();
             m_pulseParam.SetEvent(EVENT_TIMER);
             m_pulseParam.SetContext(m_globalContext);
             if(IS_VALID(m_assetManager)) m_assetManager.Pulse(m_pulseParam);
+            AppServiceDebugLog("  AppService::Pulse - Core Pulse End");
             m_lastAssetPulseTime = currentTick;
         }
 
         // C. UI Refresh (1000ms)
         if(currentTick - m_lastUiRefreshTime >= 500) {
+            AppServiceDebugLog("  AppService::Pulse - UI Refresh Begin");
             if(IS_VALID(m_ui)) m_ui.Refresh();
+            AppServiceDebugLog("  AppService::Pulse - UI Refresh End");
             m_lastUiRefreshTime = currentTick;
         }
     }

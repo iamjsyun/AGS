@@ -1,5 +1,5 @@
 ﻿{
-    "timestamp":  "2026-05-29 19:46:39",
+    "timestamp":  "2026-05-30 09:47:34",
     "total_run":  22,
     "passed":  4,
     "failed":  18,
@@ -180,10 +180,10 @@
                         "id":  "SCEN_RESILIENCE_ZOMBIE_RECOVERY",
                         "file":  "Resilience/test_zombie_recovery.tsd",
                         "status":  "FAILED",
-                        "ticks":  0,
+                        "ticks":  2,
                         "passed":  0,
-                        "failed":  0,
-                        "details":  "No result file generated (Terminal execution timeout)"
+                        "failed":  1,
+                        "details":  "E2E ticks execution verification completed."
                     },
                     {
                         "id":  "SCEN_RESILIENCE_BROKER_REJECT",

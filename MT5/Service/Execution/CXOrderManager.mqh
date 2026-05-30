@@ -1,4 +1,4 @@
-﻿#ifndef CXORDERMANAGER_MQH
+#ifndef CXORDERMANAGER_MQH
 #define CXORDERMANAGER_MQH
 
 #include "..\..\Core\Interfaces\IXOrderManager.mqh"
@@ -126,32 +126,48 @@ public:
         if(IS_VALID(repo)) repo.UpdateStatus(sig);
     }
 
+    void OrderManagerDebugLog(string msg) {
+        int h = FileOpen("debug_log.txt", FILE_WRITE|FILE_READ|FILE_TXT|FILE_ANSI);
+        if(h != INVALID_HANDLE) {
+            FileSeek(h, 0, SEEK_END);
+            FileWriteString(h, msg + "\r\n");
+            FileClose(h);
+        } else {
+            Print("[DEBUGLOG-ERR] Failed to write debug_log.txt in OrderManager. Code: ", GetLastError());
+        }
+    }
+
     virtual bool ExecuteEntry(ICXParam* xp) override {
-        if(IS_NULL(m_ctx) || IS_NULL(xp)) return false;
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Start");
+        if(IS_NULL(m_ctx) || IS_NULL(xp)) { OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Abort: invalid m_ctx or xp"); return false; }
         ICXSignal* sig = xp.GetSignal();
-        if(IS_INVALID(sig)) return false;
+        if(IS_INVALID(sig)) { OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Abort: invalid signal"); return false; }
 
         string sid = sig.GetSid(); StringTrimLeft(sid); StringTrimRight(sid);
         ulong magic = sig.GetMagic();
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - SID: " + sid + ", Magic: " + (string)magic);
 
         // [v18.8 Safety Guard] 
         // Minimum check: If ticket already exists in the object, never send another order.
         if(sig.GetTicket() > 0 || sig.GetStatus() >= XE_IN_TRANSIT) {
              XP_LOG_WARN(xp, CXAuditFormatter::Build("EXEC-ENTRY-GUARD", xp, "ABORT: Signal already has a ticket or is in transit."));
+             OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Guard abort: ticket exists or in transit");
              return true; 
         }
 
         // [v14.40 Throttled Retry]
-        // If we recently failed with Market Closed, wait at least 60 seconds before trying again.
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Retry timer check");
         string retryTimerKey = "EntryRetryTimer_" + sid;
         ICXParam* pTimer = m_ctx.GetParam(retryTimerKey);
         if(IS_VALID(pTimer)) {
             if(TimeCurrent() < (datetime)pTimer.GetLong()) {
                 xp.SetString("WAIT_MARKET_OPEN"); // Stay in wait state
+                OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Abort: retry timer waiting");
                 return false;
             }
         }
 
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Extract parameters");
         string symbol = sig.GetSymbol();
         int    dir    = sig.GetDir();
         double lot    = sig.GetLot();
@@ -161,24 +177,28 @@ public:
         double execPrice = sig.GetPriceOpen();
         double finalSL   = sig.GetPriceSL();
         double finalTP   = sig.GetPriceTP();
+        OrderManagerDebugLog(StringFormat("CXOrderManager::ExecuteEntry() - Parameters: Sym:%s, Dir:%d, Lot:%.2f, Price:%.5f, SL:%.5f, TP:%.5f", symbol, dir, lot, execPrice, finalSL, finalTP));
         
         ENUM_ORDER_TYPE order_type = (sig.GetType() == ORDER_MARKET) ? 
                                      (dir == CX_DIR_BUY ? ORDER_TYPE_BUY : ORDER_TYPE_SELL) : 
                                      (dir == CX_DIR_BUY ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT);
 
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Configuring terminal");
         m_terminal.SetMagic(magic);
         ICXSymbolManager* symMgr = CX_GET_OBJ(m_ctx, "sym_mgr", ICXSymbolManager);
         ICXPriceManager* priceMgr = CX_GET_OBJ(m_ctx, "price_mgr", ICXPriceManager);
+        OrderManagerDebugLog(StringFormat("CXOrderManager::ExecuteEntry() - symMgr valid: %s, priceMgr valid: %s", (string)(symMgr!=NULL), (string)(priceMgr!=NULL)));
         
         double point = IS_VALID(symMgr) ? symMgr.GetPoint(symbol) : SymbolInfoDouble(symbol, SYMBOL_POINT);
+        OrderManagerDebugLog(StringFormat("CXOrderManager::ExecuteEntry() - Point: %.5f", point));
         double currentMkt = IS_VALID(priceMgr) ? priceMgr.GetMarketPrice(symbol, dir) : SymbolInfoDouble(symbol, (dir == CX_DIR_BUY) ? SYMBOL_ASK : SYMBOL_BID);
+        OrderManagerDebugLog(StringFormat("CXOrderManager::ExecuteEntry() - Current market price: %.5f", currentMkt));
         int stopsLevel = IS_VALID(symMgr) ? symMgr.GetStopsLevel(symbol) : (int)SymbolInfoInteger(symbol, SYMBOL_TRADE_STOPS_LEVEL);
+        OrderManagerDebugLog(StringFormat("CXOrderManager::ExecuteEntry() - StopsLevel: %d", stopsLevel));
         double minDistance = (stopsLevel + 1) * point;
         
         if(sig.GetType() != ORDER_MARKET) {
-            // [v16.12 Fix] Exact Limit Order Price Clamping based on StopsLevel
-            // For BUY LIMIT, the limit price must be <= (Current Ask - StopsLevel)
-            // For SELL LIMIT, the limit price must be >= (Current Bid + StopsLevel)
+            OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Clamping limit price");
             if(dir == CX_DIR_BUY && execPrice > currentMkt - minDistance) {
                 execPrice = currentMkt - minDistance;
                 XP_LOG_WARN(xp, CXAuditFormatter::Build("EXEC-ENTRY-ADJ", xp, StringFormat("Buy Limit price adjusted down to %.5f due to StopsLevel", execPrice)));
@@ -188,32 +208,47 @@ public:
                 XP_LOG_WARN(xp, CXAuditFormatter::Build("EXEC-ENTRY-ADJ", xp, StringFormat("Sell Limit price adjusted up to %.5f due to StopsLevel", execPrice)));
             }
         }
+        OrderManagerDebugLog(StringFormat("CXOrderManager::ExecuteEntry() - Price clamping finished, final execPrice: %.5f", execPrice));
 
         string funcName = (sig.GetType() == ORDER_MARKET) ? "PositionOpen" : "OrderOpen";
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Function name: " + funcName);
         
         // [v11.10] Pre-Call Raw Parameter Audit
         string rawParams = StringFormat("Raw: [Sym:%s, Lot:%.2f, Type:%d, P:%.2f, SL:%.2f, TP:%.2f, Magic:%I64d, SID:%s]",
                                         symbol, lot, order_type, execPrice, finalSL, finalTP, magic, comment);
         xp.SetString(rawParams);
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Raw parameters assembled: " + rawParams);
         string auditMsg = GetAuditString(xp, "AUDIT-CALL:" + funcName);
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - AuditMsg generated");
         XP_LOG_OK(xp, auditMsg);
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - XP_LOG_OK finished");
         Print(auditMsg);
 
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Fetching repository");
         IRepository* repo = CX_GET_OBJ(m_ctx, "repo", IRepository);
         if(sig.GetType() == ORDER_MARKET) {
             sig.SetTag("ENTRY_MARKET");
         }
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Updating signal status message");
         CXMessageProvider::UpdateStatus(sig, sig.GetStatus(), "Calling " + funcName + "...");
-        if(IS_VALID(repo)) repo.UpdateStatus(sig);
+        if(IS_VALID(repo)) {
+            OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Updating status in DB repo");
+            repo.UpdateStatus(sig);
+            OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - DB repo status updated");
+        }
 
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Calling m_terminal.OrderOpen/PositionOpen");
         bool success = (sig.GetType() == ORDER_MARKET) ?
             m_terminal.PositionOpen(xp, sig, execPrice, finalSL, finalTP) :
             m_terminal.OrderOpen(xp, sig, execPrice, finalSL, finalTP);
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - m_terminal call finished, success: " + (string)success);
 
         xp.SetString(""); // Clear for next use
         uint retCode = m_terminal.GetLastRetCode();
         string receptionMsg = CXAuditFormatter::Build("AUDIT-RECEPTION", xp, StringFormat("%s Result: %s (Code:%u)", funcName, success?"SUCCESS":"FAILED", retCode));
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - Assembled receptionMsg: " + receptionMsg);
         XP_LOG_INFO(xp, receptionMsg);
+        OrderManagerDebugLog("CXOrderManager::ExecuteEntry() - XP_LOG_INFO finished");
         Print(receptionMsg);
 
         if(!success) {

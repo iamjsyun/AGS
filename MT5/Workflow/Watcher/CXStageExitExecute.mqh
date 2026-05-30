@@ -1,4 +1,4 @@
-﻿#ifndef CXSTAGEEXITEXECUTE_MQH
+#ifndef CXSTAGEEXITEXECUTE_MQH
 #define CXSTAGEEXITEXECUTE_MQH
 
 #include "..\..\Core\Interfaces\IXStage.mqh"
@@ -34,7 +34,7 @@ public:
         m_exitMgr = CX_GET_OBJ(ctx, "exit_mgr", IXExitManager);
         m_repo = CX_GET_OBJ(ctx, "repo", IRepository);
         m_orchestrator = CX_GET_OBJ(ctx, "orchestrator", ICXSequenceOrchestrator);
-        if(IS_INVALID(m_assetMgr) || IS_INVALID(m_orchestrator) || IS_INVALID(m_repo)) return false;
+        if(IS_INVALID(m_assetMgr) || IS_INVALID(m_exitMgr) || IS_INVALID(m_orchestrator) || IS_INVALID(m_repo)) return false;
         return IXStage::Bind(ctx);
     }
 

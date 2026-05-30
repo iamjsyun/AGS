@@ -1,4 +1,4 @@
-﻿#ifndef CXSIGNALWATCHER_MQH
+#ifndef CXSIGNALWATCHER_MQH
 #define CXSIGNALWATCHER_MQH
 
 #include "..\..\Core\Interfaces\IRepository.mqh"
@@ -43,6 +43,9 @@ public:
             m_watcherContext.Register("exit_mgr", globalCtx.Get("exit_mgr"));
             m_watcherContext.Register("terminal_platform", globalCtx.Get("terminal_platform"));
             m_watcherContext.Register("db", globalCtx.Get("db"));
+            m_watcherContext.Register("price_mgr", globalCtx.Get("price_mgr"));
+            m_watcherContext.Register("sym_mgr", globalCtx.Get("sym_mgr"));
+            m_watcherContext.Register("risk_mgr", globalCtx.Get("risk_mgr"));
             m_watcherContext.Register("logger", m_watcherLogger);
             m_watcherContext.Register("factory", factory);
         }

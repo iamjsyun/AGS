@@ -1,8 +1,8 @@
 # AGS Batch E2E Scenario Tester (run_all_tests.ps1)
 # Usage: powershell -File ./run_all_tests.ps1
 
-$TerminalPath = "D:\Program Files\XM Global MT5\terminal64.exe"
-$CommonPath = "C:\Users\hijsyun\AppData\Roaming\MetaQuotes\Terminal\Common\Files\AGS"
+$TerminalPath = "C:\Program Files\XM Global MT5\terminal64.exe"
+$CommonPath = "$env:APPDATA\MetaQuotes\Terminal\Common\Files\AGS"
 $WorkspaceScripts = "d:\Projects\AGS\MT5\_Test\Scenarios\Scripts"
 $ManifestPath = "d:\Projects\AGS\MT5\_Test\Scenarios\scenario_manifest.json"
 $ReportPath = "d:\Projects\AGS\_doc\result\test_results_summary.json"
@@ -45,6 +45,17 @@ Copy-Item -Path "$WorkspaceScripts\Core\*.tsd" -Destination "$CommonPath\Core\" 
 Copy-Item -Path "$WorkspaceScripts\Trade\*.tsd" -Destination "$CommonPath\Trade\" -Force -ErrorAction SilentlyContinue
 Copy-Item -Path "$WorkspaceScripts\Resilience\*.tsd" -Destination "$CommonPath\Resilience\" -Force -ErrorAction SilentlyContinue
 Write-Host "TSDL script sync complete." -ForegroundColor Green
+
+# Prepare Database
+$dbDir = Split-Path -Path $CommonPath
+$TemplateDb = Join-Path -Path $dbDir -ChildPath "ats.db"
+$TargetDb = Join-Path -Path $dbDir -ChildPath "AGS.db"
+if (Test-Path -Path $TemplateDb) {
+    Copy-Item -Path $TemplateDb -Destination $TargetDb -Force
+    Write-Host "Database AGS.db prepared from template." -ForegroundColor Green
+} else {
+    Write-Host "WARNING: Template database ats.db NOT found." -ForegroundColor Yellow
+}
 
 # 1.5. 유닛 테스트 실행 (AGSTestRunner.mq5)
 Write-Host "--------------------------------------------------" -ForegroundColor Cyan

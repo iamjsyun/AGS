@@ -25,6 +25,7 @@ public:
     
     virtual bool Bind(ICXContext* ctx) override {
         m_priceMgr = CX_GET_OBJ(ctx, "price_mgr", ICXPriceManager);
+        if(IS_INVALID(m_priceMgr)) return false;
         return IXTask::Bind(ctx);
     }
 
@@ -38,8 +39,7 @@ public:
         ICXParam* pActive = ctx.GetParam(activeKey);
         if(IS_INVALID(pActive) || pActive.GetInt() != 1) return TASK_CONTINUE;
 
-        double currentPrice = IS_VALID(m_priceMgr) ? m_priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir()) : 
-                             SymbolInfoDouble(sig.GetSymbol(), (sig.GetDir() == CX_DIR_BUY) ? SYMBOL_BID : SYMBOL_ASK);
+        double currentPrice = m_priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir());
 
         string extKey = (m_mode == TRAIL_MODE_ENTRY) ? "TE_Extreme_" : "TS_Extreme_";
         extKey += sig.GetSid();

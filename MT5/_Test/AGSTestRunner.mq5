@@ -19,11 +19,28 @@
 #include "UnitTests\TestActiveSync.mqh"
 #include "UnitTests\TestExitWorkflow.mqh"
 #include "UnitTests\TestIntentWatch.mqh"
+#include "UnitTests\TestPVBIntegrity.mqh"
+
+void CloseAllChartsExceptCurrent() {
+    long currChart = ChartID();
+    long chartId = ChartFirst();
+    int limit = 100;
+    while(chartId >= 0 && limit > 0) {
+        long nextChart = ChartNext(chartId);
+        if(chartId != currChart) {
+            ChartClose(chartId);
+        }
+        chartId = nextChart;
+        limit--;
+    }
+}
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
 int OnInit() {
+    CloseAllChartsExceptCurrent();
+
     Print("==================================================");
     Print("Starting ATSE Unit Tests (Task-Level Isolation)...");
     Print("==================================================");
@@ -43,6 +60,7 @@ int OnInit() {
     if (TestActiveSync::Run()) passed++; else failed++;
     if (TestExitWorkflow::Run()) passed++; else failed++;
     if (TestIntentWatch::Run()) passed++; else failed++;
+    if (TestPVBIntegrity::Run()) passed++; else failed++;
     
     // Add more test classes here...
     

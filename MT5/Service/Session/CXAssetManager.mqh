@@ -1,4 +1,4 @@
-﻿#ifndef CXASSETMANAGER_MQH
+#ifndef CXASSETMANAGER_MQH
 #define CXASSETMANAGER_MQH
 
 #include <Arrays\ArrayObj.mqh>
@@ -57,66 +57,85 @@ public:
     virtual ~CXAssetManager() {
         SAFE_DELETE(m_tasks);
         SAFE_DELETE(m_assets);
-        SAFE_DELETE(m_orderMgr);
-        SAFE_DELETE(m_posMgr);
-        SAFE_DELETE(m_exitMgr);
+        m_orderMgr = NULL;
+        m_posMgr = NULL;
+        m_exitMgr = NULL;
     }
 
     virtual void Initialize(IRepository* repo, ICXContext* ctx, ICXServiceFactory* factory) override {
         m_globalRepo = repo;
         m_globalContext = ctx;
         m_factory = factory;
-        m_orderMgr = factory.CreateOrderManager(ctx);
-        m_posMgr = factory.CreatePositionManager(ctx);
-        m_exitMgr = factory.CreateExitManager(ctx);
+        m_orderMgr = CX_GET_OBJ(ctx, "order_mgr", IXOrderManager);
+        m_posMgr = CX_GET_OBJ(ctx, "pos_mgr", IXPositionManager);
+        m_exitMgr = CX_GET_OBJ(ctx, "exit_mgr", IXExitManager);
         m_terminal = CX_GET_OBJ(ctx, "terminal_platform", IXTerminalPlatform);
+    }
 
-        // [v1.3 Fix] Register managers in global context so child session contexts can access them
-        if(IS_VALID(m_globalContext)) {
-            m_globalContext.Register("order_mgr", m_orderMgr);
-            m_globalContext.Register("pos_mgr", m_posMgr);
-            m_globalContext.Register("exit_mgr", m_exitMgr);
+    void AssetManagerDebugLog(string msg) {
+        int h = FileOpen("debug_log.txt", FILE_WRITE|FILE_READ|FILE_TXT|FILE_ANSI);
+        if(h != INVALID_HANDLE) {
+            FileSeek(h, 0, SEEK_END);
+            FileWriteString(h, msg + "\r\n");
+            FileClose(h);
+        } else {
+            Print("[DEBUGLOG-ERR] Failed to write debug_log.txt in AssetManager. Code: ", GetLastError());
         }
     }
 
-    // --- [Commands] ---
     virtual ulong ExecuteEntry(ICXParam* xp) override {
-        if(IS_INVALID(m_orderMgr) || IS_INVALID(xp)) return 0;
+        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Start");
+        if(IS_INVALID(m_orderMgr) || IS_INVALID(xp)) { AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Abort: invalid orderMgr or xp"); return 0; }
         ICXSignal* sig = xp.GetSignal();
-        if(IS_INVALID(sig)) return 0;
+        if(IS_INVALID(sig)) { AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Abort: invalid signal"); return 0; }
 
-        // [v1.4 Fix] Duplicate SID Guard Mandate
-        // 이미 해당 SID로 관리 중인 세션이나 자산이 있다면 중복 진입 거부 (데이터 무결성 보호)
+        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Duplicate SID check");
         if(FindSessionBySid(sig.GetSid()) != NULL || IsAssetLive(sig.GetSid())) {
             XP_LOG_ERROR(xp, StringFormat("[ASSET-MGR] Entry Rejected. SID %s already active.", sig.GetSid()));
+            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Abort: duplicate SID active");
             return 0;
         }
 
+        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Creating price manager");
         ICXPriceManager* priceMgr = m_factory.CreatePriceManager(m_globalContext);
         if(IS_VALID(priceMgr)) {
             string sym = sig.GetSymbol(); int dir = sig.GetDir();
+            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Calculating exec price");
             double execPrice = priceMgr.CalculateExecPrice(xp, sym, dir, sig.GetType(), sig.GetTELimit());
+            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Calculating base price");
             double basePrice = (sig.GetType() == ORDER_MARKET) ? priceMgr.GetMarketPrice(sym, dir) : execPrice;
             sig.SetPriceOpen(execPrice);
+            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Calculating SL");
             sig.SetPriceSL(priceMgr.CalculateSL(xp, sym, dir, basePrice, sig.GetSL()));
+            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Calculating TP");
             sig.SetPriceTP(priceMgr.CalculateTP(xp, sym, dir, basePrice, sig.GetTP()));
+            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Deleting price manager");
             SAFE_DELETE(priceMgr);
         }
+        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Price manager setup complete");
 
         // [v1.2 Atomic Lock Mandate] 브로커 호출 전 '요청 중' 상태로 DB 즉시 고정 (중복 진입 방어)
         sig.SetStatus(XE_PENDING_REQ);
         sig.SetStatusMsg("Sending Request to Broker...");
+        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Updating signal status in DB");
         if(IS_VALID(m_globalRepo)) m_globalRepo.UpdateStatus(sig);
+        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Signal status updated in DB");
 
-        if(m_orderMgr.ExecuteEntry(xp)) {
+        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Calling m_orderMgr.ExecuteEntry");
+        bool success = m_orderMgr.ExecuteEntry(xp);
+        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - m_orderMgr.ExecuteEntry finished, result: " + (string)success);
+        if(success) {
             ulong ticket = sig.GetTicket();
+            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Ticket received: " + (string)ticket);
             if(ticket > 0) {
                 CXAssetRecord* rec = new CXAssetRecord(ticket, sig.GetSid());
                 rec.symbol = sig.GetSymbol(); rec.lot = sig.GetLot(); rec.price_open = sig.GetPriceOpen();
                 m_assets.Add(rec);
+                AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Success");
                 return ticket;
             }
         }
+        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - End (failed to execute or get ticket)");
         return 0;
     }
 virtual bool ExecuteExit(ICXParam* xp, string sid) override {

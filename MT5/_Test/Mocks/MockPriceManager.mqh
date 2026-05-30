@@ -17,6 +17,17 @@ class MockPriceManager : public CXPriceManager {
 private:
     CXVirtualPricer* m_pricer;
 
+    void DebugLog(string msg) {
+        int h = FileOpen("debug_log.txt", FILE_WRITE|FILE_READ|FILE_TXT|FILE_ANSI);
+        if(h != INVALID_HANDLE) {
+            FileSeek(h, 0, SEEK_END);
+            FileWriteString(h, msg + "\r\n");
+            FileClose(h);
+        } else {
+            Print("[DEBUGLOG-ERR] Failed to write debug_log.txt in MockPriceManager. Code: ", GetLastError());
+        }
+    }
+
 public:
     MockPriceManager(ICXContext* ctx) : CXPriceManager(ctx), m_pricer(NULL) {}
     virtual ~MockPriceManager() {}
@@ -26,26 +37,41 @@ public:
      */
     void SetPricer(CXVirtualPricer* pricer) {
         m_pricer = pricer;
+        DebugLog("MockPriceManager::SetPricer called. Pricer valid: " + (string)(CheckPointer(m_pricer) != POINTER_INVALID));
     }
 
     /**
      * @brief 방향에 따른 가상 Ask/Bid 반환 (시장가)
      */
     virtual double GetMarketPrice(string symbol, int dir) override {
+        DebugLog(StringFormat("MockPriceManager::GetMarketPrice(Sym:%s, Dir:%d) called", symbol, dir));
         if(CheckPointer(m_pricer) != POINTER_INVALID) {
-            return (dir == CX_DIR_BUY) ? m_pricer.GetAsk() : m_pricer.GetBid();
+            double ask = m_pricer.GetAsk();
+            double bid = m_pricer.GetBid();
+            double res = (dir == CX_DIR_BUY) ? ask : bid;
+            DebugLog(StringFormat("MockPriceManager::GetMarketPrice - Virtual pricer returned: Ask:%.5f, Bid:%.5f -> Res:%.5f", ask, bid, res));
+            return res;
         }
-        return CXPriceManager::GetMarketPrice(symbol, dir);
+        double res = CXPriceManager::GetMarketPrice(symbol, dir);
+        DebugLog(StringFormat("MockPriceManager::GetMarketPrice - Fallback CXPriceManager returned: %.5f", res));
+        return res;
     }
 
     /**
      * @brief 방향에 따른 가상 청산 가격 반환
      */
     virtual double GetLiquidationPrice(string symbol, int dir) override {
+        DebugLog(StringFormat("MockPriceManager::GetLiquidationPrice(Sym:%s, Dir:%d) called", symbol, dir));
         if(CheckPointer(m_pricer) != POINTER_INVALID) {
-            return (dir == CX_DIR_BUY) ? m_pricer.GetBid() : m_pricer.GetAsk();
+            double ask = m_pricer.GetAsk();
+            double bid = m_pricer.GetBid();
+            double res = (dir == CX_DIR_BUY) ? bid : ask;
+            DebugLog(StringFormat("MockPriceManager::GetLiquidationPrice - Virtual pricer returned: Ask:%.5f, Bid:%.5f -> Res:%.5f", ask, bid, res));
+            return res;
         }
-        return CXPriceManager::GetLiquidationPrice(symbol, dir);
+        double res = CXPriceManager::GetLiquidationPrice(symbol, dir);
+        DebugLog(StringFormat("MockPriceManager::GetLiquidationPrice - Fallback CXPriceManager returned: %.5f", res));
+        return res;
     }
 };
 

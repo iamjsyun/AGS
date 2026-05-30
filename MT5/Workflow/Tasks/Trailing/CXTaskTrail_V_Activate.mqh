@@ -27,6 +27,7 @@ public:
     virtual bool Bind(ICXContext* ctx) override {
         m_priceMgr = CX_GET_OBJ(ctx, "price_mgr", ICXPriceManager);
         m_symMgr = CX_GET_OBJ(ctx, "sym_mgr", ICXSymbolManager);
+        if(IS_INVALID(m_priceMgr) || IS_INVALID(m_symMgr)) return false;
         return IXTask::Bind(ctx);
     }
 
@@ -44,9 +45,8 @@ public:
         int threshold = (m_mode == TRAIL_MODE_ENTRY) ? (int)sig.GetTEStart() : (int)sig.GetTSStart();
         if(threshold <= 0) return TASK_CONTINUE;
 
-        double currentPrice = IS_VALID(m_priceMgr) ? m_priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir()) : 
-                             SymbolInfoDouble(sig.GetSymbol(), (sig.GetDir() == CX_DIR_BUY) ? SYMBOL_BID : SYMBOL_ASK);
-        double point = IS_VALID(m_symMgr) ? m_symMgr.GetPoint(sig.GetSymbol()) : SymbolInfoDouble(sig.GetSymbol(), SYMBOL_POINT);
+        double currentPrice = m_priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir());
+        double point = m_symMgr.GetPoint(sig.GetSymbol());
         double dir_sign = (sig.GetDir() == CX_DIR_BUY) ? 1.0 : -1.0;
 
         bool is_activated = false;
