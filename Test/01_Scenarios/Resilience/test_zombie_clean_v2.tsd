@@ -1,0 +1,30 @@
+#==================================================================
+# [Unit Scenario] Zombie Session Cleanup v2.0
+# Description: Verifies that sessions with no physical assets are cleaned up
+#==================================================================
+
+SCENARIO: SCEN_SYNC_ZOMBIE_CLEAN_V2 : "Zombie Session Cleanup v2.0"
+DEFINE: SYMBOL=GOLDF#, CNO=4001, SNO=01, GNO=01, DIR=1, TYPE=1, LOT=0.1
+
+PRICER: GOLDF# > TREND : trend_slope=0.0, jump_prob=0.0, start=2000.00, spread=20
+
+# T1: Discovery
+TICK: 1   > INJECT: signals : xa_entry=1, xa_exit=0, price_signal=2000.00, \
+                              cno=4001, yymmddhh=26053114, sno=01, gno=01, dir=1, type=1, \
+                              lot=0.1
+          ? EXPECT: session : state=ORD_READY
+
+# T2: Execution
+TICK: 2   > INJECT: terminal: order_fill=false, ticket=88401
+          ? EXPECT: session : state=ORD_TRAILING
+
+# T3: Order Disappears (Zombie State starts)
+TICK: 3   > INJECT: terminal: order_fill=false, ticket=0
+          ? EXPECT: session : state=ORD_TRAILING
+
+# T4: Heartbeat - Engine detects absence
+TICK: 4   ? EXPECT: session : state=ORD_TRAILING
+
+# T5: Cleanup - Analyzer confirms closure and session ends
+TICK: 5   > INJECT: history: deal=99401, pos_id=88401, entry=1, comment="canceled by broker"
+          ? EXPECT: session : state=SYS_CLOSED * xe_status=XE_CLOSED_SIGNAL

@@ -1,10 +1,11 @@
 ## Cross-PC Synchronization & Modular Memory (v2.2)
 
-## Design Documentation Standard (v1.0)
+## Design Documentation Standard (v1.1 - Cumulative Management)
 - **PDCA/Design Storage**: 모든 설계 문서(.md)는 `_doc/` 폴더 최상위 또는 주제별 서브폴더에 저장하여 전 프로젝트가 공유한다.
-- **Version Control**: 문서 파일명에는 반드시 `v1.x` 형태의 버전을 포함한다.
-- **File Naming**: 문서 파일명은 반드시 파일 이름 끝에 버전 정보를 포함해야 함 (`*_v1.x.md`). 예: `ANALYSIS_CODEBASE_INTEGRITY_v1.1.md`
-- **Incremental Updates**: 아티팩트(설계 문서, 분석 보고서 등) 갱신 시 이전 버전의 핵심 내용을 최대한 유지하며, 새로운 내용을 하단에 추가(Append)하거나 섹션을 구분하여 누적 관리한다.
+- **Version Control & Naming**: 문서 파일명은 반드시 파일 이름 끝에 버전 정보를 포함해야 하며(`*_v1.x.md`), 신규 아티팩트 생성 시에도 `v1.0`부터 시작하여 명시적으로 관리한다.
+- **Incremental & Faithful Updates**: 아티팩트 갱신 시 이전 버전의 핵심 내용을 충실히 유지하며, 특히 다이어그램(Mermaid 등) 및 시스템 구성도는 유실 없이 통합 관리한다. 새로운 내용은 섹션을 구분하여 하단에 추가(Append)하거나 내용을 보강하는 방식으로 누적 관리한다.
+- **Internal History Mandate**: 모든 아티팩트(특히 최종 버전)는 문서 상단 또는 하단에 'Document History' 섹션을 포함하여, 이전 버전에서 변경된 핵심 사항과 이력을 파일 내부에서 즉시 확인할 수 있도록 해야 한다.
+- **Korean Naming**: 아티팩트 문서명은 한국어로 작성하며, 갱신 시 버전(Ver) 정보를 접미어로 추가한다. 예: `PLAN_AGS_폴더_정비_및_빌드_복구_계획서_v1.0.md`
 
 
 ## Trading Logging Standard (v11.1 - Extended)
@@ -33,7 +34,7 @@
 1.  **Price Management**: 모든 가격 계산(시장가, SL/TP)은 반드시 `ICXPriceManager`를 통해서만 수행한다.
 2.  **Risk Management**: 로트(Lot) 및 마진 검증은 반드시 `ICXRiskManager`를 통해서만 수행한다. (Lot <= 0 또는 Lot > 50 금지)
 3.  **Symbol Management**: `Point`, `Digits`, `StopsLevel` 등 심볼 속성은 반드시 `ICXSymbolManager`를 통해서만 조회한다.
-4.  **Inventory Management**: 터미널 실물 자산 존재 여부는 반드시 `ICXInventoryManager`를 통해 확인하며, 성공 시 `ICXSignal` 모델을 즉시 동기화한다.
+4.  **Asset Management**: 터미널 실물 자산 존재 여부는 반드시 `ICXAssetManager`를 통해 확인하며, 성공 시 `ICXSignal` 모델을 즉시 동기화한다.
 
 ### 2. 신호 처리 및 보정 규칙
 1.  **신호가 무시**: 신호에 주입된 원본 가격(`price_signal`)은 무시하고 실시간 시장가 기준 `execPrice`를 산출한다.
@@ -73,6 +74,10 @@
 - **Safety Protocol**: Every transaction must include an explicit safety guard and confirmation check before execution.
 - **Resource Management**: Strictly manage all memory and handles; no automatic resource cleanup is permitted without explicit validation.
 
-## Testing & Verification Standard (v1.0)
-- **Execution Policy**: 모든 테스트 스크립트(Unit Tests, E2E Scenarios 등)는 개발자의 임의 실행을 금지하며, 오직 사용자의 명시적인 실행 요청이 있을 때에만 실행한다.
+## Engineering Standards (v1.0)
+- **Automation Script Naming Rule**: `Automation/` 폴더 내의 모든 스크립트는 `[Action]_[Target]_[Detail].[ext]` 형식을 따르며, 약어 사용을 지양하고 작업 내용을 명확히 드러낸다.
+    - **권장 형식**: `build_ags_main.ps1`, `run_unit_tests.ps1`, `inspect_db_sqlite.py`
+    - **금지 형식**: `bags.ps1` (약어), `cags.ps1` (모호함)
+    - **주요 Action 키워드**: `build`, `check`, `run`, `inspect`, `sync`, `setup`
+
 

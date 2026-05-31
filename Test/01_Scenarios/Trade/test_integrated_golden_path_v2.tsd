@@ -1,0 +1,51 @@
+#==================================================================
+# [Integrated Scenario] Golden Path (Standard Profit Cycle) v2.0
+# Description: Discovery -> Validation -> Execution -> Binding -> Trailing -> TP Close
+#==================================================================
+
+SCENARIO: SCEN_INTEGRATED_GOLDEN_PATH_V2 : "Golden Path (Standard Profit Cycle) v2.0"
+DEFINE: SYMBOL=GOLDF#, CNO=2001, SNO=01, GNO=01, DIR=1, TYPE=1, LOT=0.5
+
+PRICER: GOLDF# > TREND : trend_slope=0.0, jump_prob=0.0, start=2000.00, spread=20
+
+# T1: Discovery - Signal Injected from DB
+TICK: 1   > INJECT: signals : xa_entry=1, xa_exit=0, price_signal=2000.00, \
+                              cno=2001, yymmddhh=26053114, sno=01, gno=01, dir=1, type=1, \
+                              lot=0.5, te_start=200, te_step=100, te_limit=500, \
+                              ts_start=1000, ts_step=300, sl=2000, tp=5000
+          ? EXPECT: session : state=ORD_READY * xe_status=XE_READY
+
+# T2: Validation - Internal Guard checks (Price/Lot/Risk)
+TICK: 2   ? EXPECT: signal  : cno=2001 * sno=01 * lot=0.5
+
+# T3: Execution - Broker Call Simulated
+TICK: 3   > INJECT: terminal: order_fill=false, ticket=88001
+          ? EXPECT: session : state=ORD_TRAILING * xe_status=XE_PENDING_PLACED
+
+# T4: Tracking - Price moves to improve entry (Trailing Entry)
+TICK: 4   > MARKET: GOLDF#  : price=1995.00
+          ? EXPECT: session : state=ORD_TRAILING * xe_status=XE_PENDING_PLACED
+
+# T5: Binding - Order Filled by Broker (Virtual Market Touch)
+TICK: 5   > INJECT: terminal: order_fill=true, ticket=88001
+          ? EXPECT: session : state=POS_ACTIVE * xe_status=XE_EXECUTED
+
+# T6: Management - Price rises toward Trailing Stop activation
+TICK: 6   > MARKET: GOLDF#  : price=2005.00
+          ? EXPECT: session : state=POS_ACTIVE * xe_status=XE_EXECUTED
+
+# T7: Management - Trailing Stop Activated (+1000 points profit)
+TICK: 7   > MARKET: GOLDF#  : price=2015.00
+          ? EXPECT: session : state=POS_TRAILING * xe_status=XE_EXECUTED
+
+# T8: Management - TP Target reached (2000 + 50 points = 2050.00)
+TICK: 8   > MARKET: GOLDF#  : price=2055.00
+          ? EXPECT: session : state=POS_TRAILING * xe_status=XE_EXECUTED
+
+# T9: Closure - Broker TP Execution
+TICK: 9   > INJECT: terminal: order_fill=false, ticket=0
+          > INJECT: history: deal=99001, pos_id=88001, entry=1, comment="tp hit [tp]"
+          ? EXPECT: session : state=SYS_CLOSED * xe_status=XE_CLOSED_TP
+
+# T10: Finalization - Post-Closure Audit
+TICK: 10  ? EXPECT: signal  : xa_exit=2 * xe_status=XE_CLOSED_TP

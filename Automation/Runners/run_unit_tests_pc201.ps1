@@ -1,5 +1,5 @@
-# AGS Unit Test Suite Runner (run_unit_tests_201.ps1)
-# Usage: powershell -File ./run_unit_tests_201.ps1
+# AGS Unit Test Suite Runner (run_unit_tests_pc201.ps1)
+# Usage: powershell -File ./run_unit_tests_pc201.ps1
 
 $TerminalPath = "C:\Program Files\XM Global MT5\terminal64.exe"
 $CommonPath = "$env:APPDATA\MetaQuotes\Terminal\Common\Files\AGS"
@@ -14,7 +14,7 @@ function Clear-ResultFile {
     param([string]$path)
     if (Test-Path -Path $path) {
         Remove-Item -Path $path -Force -ErrorAction SilentlyContinue
-        $limit = 30
+        $limit = 50
         while ((Test-Path -Path $path) -and ($limit -gt 0)) {
             Start-Sleep -Milliseconds 100
             Remove-Item -Path $path -Force -ErrorAction SilentlyContinue
@@ -23,11 +23,10 @@ function Clear-ResultFile {
     }
 }
 
-# 0. Clean up existing terminal instances before run
 Kill-Terminal
 
 Write-Host "=================================================="
-Write-Host "AGS Unit Test Suite Runner (run_unit_tests_201.ps1)"
+Write-Host "AGS Unit Test Suite Runner (run_unit_tests_pc201.ps1)"
 Write-Host "=================================================="
 
 # Prepare Database
@@ -44,7 +43,6 @@ if (Test-Path -Path $TemplateDb) {
 # 1. 유닛 테스트 실행 (AGSTestRunner.mq5)
 Write-Host "Running Unit Test Suite (AGSTestRunner.mq5)..." -ForegroundColor Cyan
 
-# 기존 결과 파일 제거
 $unitResultPath = "$CommonPath\scenario_result.txt"
 if (!(Test-Path -Path $CommonPath)) {
     New-Item -ItemType Directory -Path $CommonPath -Force | Out-Null
@@ -55,7 +53,7 @@ Clear-ResultFile -path $unitResultPath
 "UNIT_TEST" | Out-File -FilePath "$CommonPath\scenario_target.txt" -Encoding ascii -NoNewline
 
 Write-Host "Launching unit test runner..." -ForegroundColor Gray
-$unitProcess = Start-Process -FilePath $TerminalPath -ArgumentList "/config:d:\Projects\AGS\unit_startup.ini" -PassThru -NoNewWindow
+$unitProcess = Start-Process -FilePath $TerminalPath -ArgumentList "/config:D:\Projects\AGS\Test\02_Config\unit_startup.ini" -PassThru -NoNewWindow
 if ($unitProcess -ne $null) {
     Write-Host "Unit test process started. PID: $($unitProcess.Id)" -ForegroundColor Gray
 } else {
@@ -63,13 +61,17 @@ if ($unitProcess -ne $null) {
     exit 1
 }
 
-# 유닛 테스트 결과 파일이 생성될 때까지 폴링 대기 (최대 40초)
-$maxUnitWait = 40
+# 유닛 테스트 결과 파일이 생성될 때까지 폴링 대기 (최대 120초)
+$maxUnitWait = 120
 $unitWaited = 0
+Write-Host "Waiting for results (max 120s)..." -NoNewline
 while (!(Test-Path -Path $unitResultPath) -and ($unitWaited -lt $maxUnitWait)) {
     Start-Sleep -Seconds 1
     $unitWaited++
+    if ($unitWaited % 10 -eq 0) { Write-Host "." -NoNewline }
 }
+Write-Host " Done."
+
 Kill-Terminal
 
 # 결과 출력 및 성공 여부에 따라 종료 코드 반환
@@ -93,6 +95,6 @@ if (Test-Path -Path $unitResultPath) {
         exit 1
     }
 } else {
-    Write-Host "ERROR: Unit test result file NOT found (timeout)." -ForegroundColor Red
+    Write-Host "ERROR: Unit test result file NOT found (timeout after 120s)." -ForegroundColor Red
     exit 1
 }

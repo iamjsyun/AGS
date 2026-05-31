@@ -1,5 +1,11 @@
 # [DESIGN] AGS v2.0: Pre-Validated Binding (PVB) Pattern — 정밀 분석 고도화
 
+## Document History
+| Version | Date | Description | Author |
+| :--- | :--- | :--- | :--- |
+| v1.0 | 2026-05-29 | Initial PVB (Pre-Validated Binding) Pattern design. | System |
+| v2.0 | 2026-05-30 | Expanded with 15-task coverage analysis, 2-layer verification flow, and Unit Test strategy. | System |
+
 **Version**: v2.0
 **Status**: Active — Fully Implemented & Verified
 **Date**: 2026-05-30

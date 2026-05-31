@@ -16,7 +16,7 @@
 ### 핵심 설계 목표
 1. **규격 일관성 (Dual-Write & Standardization)**: 모든 로그는 시스템 터미널 로그와 세션별 파일/원격 서버 로그에 동시에 남으며, 동일한 파싱 구조를 유지합니다.
 2. **구조적 가용성 (Structure & Machine-Readability)**: 정형화된 대괄호(`[...]`) 블록 구조를 제공하여 정규식(Regex), ELK Stack(Logstash), 혹은 외부 AI 분석 모델이 정밀하게 파싱하고 분류할 수 있도록 합니다.
-3. **SSOC 자산 연동 (SSOC Alignment)**: 가격(Price), 리스크(Risk), 심볼(Symbol), 실물 자산(Inventory) 상태의 상호 참조 키(SID/GID, Ticket)가 모든 로그 항목에 누락 없이 마킹됩니다.
+3. **SSOC 자산 연동 (SSOC Alignment)**: 가격(Price), 리스크(Risk), 심볼(Symbol), 실물 자산(Asset) 상태의 상호 참조 키(SID/GID, Ticket)가 모든 로그 항목에 누락 없이 마킹됩니다.
 4. **성능 고려 설계 (Performance Preservation)**: 고속 틱(Tick) 환경에서 스트링 결합에 따른 성능 낭비를 막기 위한 캐싱 및 조건부 구성(Stable Mode) 메커니즘을 지원합니다.
 
 ---

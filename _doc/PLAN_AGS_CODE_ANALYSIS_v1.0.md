@@ -24,7 +24,7 @@
 * **Price Manager 의존성**: 시장가 및 진입가 계산, 손절/익절(SL/TP) 계산 시 `ICXPriceManager`만 사용해야 함.
 * **Risk Manager 의존성**: 로트 크기 및 마진 검증은 `ICXRiskManager`를 거치며, 로트가 $0$ 이하이거나 $50$을 초과하는 행위는 차단되어야 함.
 * **Symbol Manager 의존성**: `Point`, `Digits`, `StopsLevel` 등의 속성은 `ICXSymbolManager` 캐시를 거쳐 조회해야 함.
-* **Inventory Manager 의존성**: 터미널 실물 자산 유무는 `ICXInventoryManager`(`CXAssetManager`)를 사용하고 자산 상태를 `ICXSignal`과 동기화해야 함.
+* **Asset Manager 의존성**: 터미널 실물 자산 유무는 `ICXAssetManager`(`CXAssetManager`)를 사용하고 자산 상태를 `ICXSignal`과 동기화해야 함.
 * **신호가 무시 & 시장가 보정**: `price_signal`은 무시하고 실시간 `execPrice`를 적용하며 지정가 역전 시 보정을 수행해야 함.
 * **포인트 기반 변환**: SL, TP, TE, TS 등은 모두 포인트 단위로 관리하고 최종 가격 계산 시에만 변환하는 규칙 적용 여부 확인.
 
