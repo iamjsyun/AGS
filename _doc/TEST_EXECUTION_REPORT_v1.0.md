@@ -59,8 +59,8 @@ TSDL 시나리오는 파서(`CXTsdlParser`)를 통해 틱(Tick) 단위로 외부
 **시나리오 소스 데이터 (TSDL)**:
 ```text
 SCENARIO: SCEN_DUP_INJECT_01 : "Duplicate SID Block"
-DEFINE: SYMBOL=GOLDF#, CNO=1003, SNO=01, GNO=01, DIR=1, TYPE=0
-PRICER: GOLDF# > TREND : start=2350.00
+DEFINE: SYMBOL=Gold#, CNO=1003, SNO=01, GNO=01, DIR=1, TYPE=0
+PRICER: Gold# > TREND : start=2350.00
 ```
 
 **실행 및 판독 흐름 (Trace)**:

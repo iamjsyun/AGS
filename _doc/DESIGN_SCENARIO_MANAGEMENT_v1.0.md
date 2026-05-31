@@ -32,10 +32,10 @@ AGS의 신뢰성을 보장하기 위해 도입된 E2E 시나리오 테스트는 
 
 # 1. 시나리오 공통 변수 정의 (Variables)
 SCENARIO: SCEN_RESILIENCE_07 : "Broker Disconnect & Order Timeout Recovery"
-DEFINE: CNO=2003, SNO=11, SYMBOL="GOLDF#", SID="2003-26052914-11-00-1-0"
+DEFINE: CNO=2003, SNO=11, SYMBOL="Gold#", SID="2003-26052914-11-00-1-0"
 
 # 2. 가상 시장 가격 모델 환경 설정 (Virtual Pricer Settings)
-PRICER: GOLDF# > Linear : start=2350.00, step=0.10, digits=2
+PRICER: Gold# > Linear : start=2350.00, step=0.10, digits=2
 
 # 3. 사전 설정 조건 (Pre-Condition Injection)
 TICK: 0 > INJECT: signals : sid="2003-26052914-11-00-1-0", type=0, lot=0.1, sl=50, tp=100, xe_status=0

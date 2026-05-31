@@ -4,9 +4,9 @@
 #==================================================================
 
 SCENARIO: SCEN_RES_DOUBLE_ENTRY : "Double Entry Race Condition"
-DEFINE: SYMBOL=GOLDF#, CNO=1012, SNO=01, GNO=01, DIR=1, TYPE=0
+DEFINE: SYMBOL=Gold#, CNO=1012, SNO=01, GNO=01, DIR=1, TYPE=0
 
-PRICER: GOLDF# > TREND : start=2350.00
+PRICER: Gold# > TREND : start=2350.00
 
 # Tick 1: Inject two signals with different SNO but same Symbol/Dir
 TICK: 1   > INJECT: signals : xa_entry=1, price_signal=2350.00, \

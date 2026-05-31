@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2026, Gemini CLI"
 #property link      "https://github.com/google-gemini/gemini-cli"
-#property version   "1.04"
+#property version   "1.06"
 #property strict
 
 #include "UnitTests\TestEntryValidate.mqh"
@@ -25,6 +25,12 @@
 #include "UnitTests\TestPriceRiskSubdivision.mqh"
 #include "UnitTests\TestSmartPVB.mqh"
 
+// Atomic Tests (Hyper-Atomization)
+#include "UnitTests\Atomic\TestTickScraper.mqh"
+#include "UnitTests\Atomic\TestPriceInverter.mqh"
+#include "UnitTests\Atomic\TestLotStepAligner.mqh"
+#include "UnitTests\Atomic\TestStopsGuard.mqh"
+
 void CloseAllChartsExceptCurrent() {
     long currChart = ChartID();
     long chartId = ChartFirst();
@@ -40,44 +46,34 @@ void CloseAllChartsExceptCurrent() {
 int OnInit() {
     CloseAllChartsExceptCurrent();
     Print("==================================================");
-    Print("Starting ATSE Unit Tests (Task-Level Isolation)...");
+    Print("Starting ATSE Unit Tests (Atomic & Task Level)...");
     Print("==================================================");
     
     int passed = 0; int failed = 0;
     
-    bool r_EntryValidate = TestEntryValidate::Run();
-    bool r_SequenceDSL = TestSequenceDSL::Run();
-    bool r_IntegritySimulation = TestIntegritySimulation::Run();
-    bool r_RedirectRecovery = TestRedirectRecovery::Run();
-    bool r_TrailingEntry = TestTrailingEntry::Run();
-    bool r_TrailingStop = TestTrailingStop::Run();
-    bool r_ManualExitBypass = TestManualExitBypass::Run();
-    bool r_PendingSync = TestPendingSync::Run();
-    bool r_ActiveSync = TestActiveSync::Run();
-    bool r_ExitWorkflow = TestExitWorkflow::Run();
-    bool r_IntentWatch = TestIntentWatch::Run();
-    bool r_PVBIntegrity = TestPVBIntegrity::Run();
-    bool r_HistoryAnalyzer = TestHistoryAnalyzer::Run();
-    bool r_OrderValidator = TestOrderValidator::Run();
-    bool r_PriceRiskSub = TestPriceRiskSubdivision::Run();
-    bool r_SmartPVB = TestSmartPVB::Run();
+    // 1. Atomic Pure-Logic Tests
+    if (TestTickScraper::Run()) passed++; else failed++;
+    if (TestPriceInverter::Run()) passed++; else failed++;
+    if (TestLotStepAligner::Run()) passed++; else failed++;
+    if (TestStopsGuard::Run()) passed++; else failed++;
 
-    if (r_EntryValidate) passed++; else failed++;
-    if (r_SequenceDSL) passed++; else failed++;
-    if (r_IntegritySimulation) passed++; else failed++;
-    if (r_RedirectRecovery) passed++; else failed++;
-    if (r_TrailingEntry) passed++; else failed++;
-    if (r_TrailingStop) passed++; else failed++;
-    if (r_ManualExitBypass) passed++; else failed++;
-    if (r_PendingSync) passed++; else failed++;
-    if (r_ActiveSync) passed++; else failed++;
-    if (r_ExitWorkflow) passed++; else failed++;
-    if (r_IntentWatch) passed++; else failed++;
-    if (r_PVBIntegrity) passed++; else failed++;
-    if (r_HistoryAnalyzer) passed++; else failed++;
-    if (r_OrderValidator) passed++; else failed++;
-    if (r_PriceRiskSub) passed++; else failed++;
-    if (r_SmartPVB) passed++; else failed++;
+    // 2. Integration & Manager Tests
+    if (TestEntryValidate::Run()) passed++; else failed++;
+    if (TestSequenceDSL::Run()) passed++; else failed++;
+    if (TestIntegritySimulation::Run()) passed++; else failed++;
+    if (TestRedirectRecovery::Run()) passed++; else failed++;
+    if (TestTrailingEntry::Run()) passed++; else failed++;
+    if (TestTrailingStop::Run()) passed++; else failed++;
+    if (TestManualExitBypass::Run()) passed++; else failed++;
+    if (TestPendingSync::Run()) passed++; else failed++;
+    if (TestActiveSync::Run()) passed++; else failed++;
+    if (TestExitWorkflow::Run()) passed++; else failed++;
+    if (TestIntentWatch::Run()) passed++; else failed++;
+    if (TestPVBIntegrity::Run()) passed++; else failed++;
+    if (TestHistoryAnalyzer::Run()) passed++; else failed++;
+    if (TestOrderValidator::Run()) passed++; else failed++;
+    if (TestPriceRiskSubdivision::Run()) passed++; else failed++;
+    if (TestSmartPVB::Run()) passed++; else failed++;
     
     Print("==================================================");
     PrintFormat("Test Run Complete. Suites Passed: %d, Suites Failed: %d", passed, failed);
@@ -89,7 +85,6 @@ int OnInit() {
         FileWriteString(resHandle, StringFormat("passed=%d\r\n", passed));
         FileWriteString(resHandle, StringFormat("failed=%d\r\n", failed));
         FileWriteString(resHandle, StringFormat("status=%s\r\n", (failed == 0) ? "PASSED" : "FAILED"));
-        FileWriteString(resHandle, StringFormat("TestSmartPVB=%s\r\n", r_SmartPVB ? "OK" : "FAIL"));
         FileClose(resHandle);
     }
     

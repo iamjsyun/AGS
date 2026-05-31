@@ -4,10 +4,10 @@
 #==================================================================
 
 SCENARIO: SCEN_GOLDEN_PATH_01 : "Golden Path E2E Test (Entry -> Trailing -> Active -> Trailing Stop -> SL)"
-DEFINE: SYMBOL=GOLDF#, CNO=1001, SNO=01, GNO=01, DIR=1, TYPE=1, LOT=0.1
+DEFINE: SYMBOL=Gold#, CNO=1001, SNO=01, GNO=01, DIR=1, TYPE=1, LOT=0.1
 
 # Pricer setup starting at 2350.00 with 20 points spread
-PRICER: GOLDF# > TREND : trend_slope=0.0, jump_prob=0.0, start=2350.00, spread=20
+PRICER: Gold# > TREND : trend_slope=0.0, jump_prob=0.0, start=2350.00, spread=20
 
 # Tick 1: Inject signal and verify session creation
 TICK: 1   > INJECT: signals : xa_entry=1, xa_exit=0, price_signal=2350.00, \
@@ -21,7 +21,7 @@ TICK: 2   > INJECT: terminal: order_fill=false, ticket=12345
           ? EXPECT: session : state=ORD_TRAILING * xe_status=XE_PENDING_PLACED ! FAIL_MSG: "Failed to place pending order and transition to trailing"
 
 # Tick 3: Price moves down (tracks Buy Limit order)
-TICK: 3   > MARKET: GOLDF#  : price=2340.00
+TICK: 3   > MARKET: Gold#  : price=2340.00
           ? EXPECT: session : state=ORD_TRAILING * xe_status=XE_PENDING_PLACED
 
 # Tick 4: Mock position execution (fill the pending order)
@@ -29,10 +29,10 @@ TICK: 4   > INJECT: terminal: order_fill=true, ticket=12345
           ? EXPECT: session : state=POS_ACTIVE * xe_status=XE_EXECUTED ! FAIL_MSG: "Failed to execute order fill"
 
 # Tick 5: Price moves up to activate Trailing Stop (2340.00 + 25 points = 2365.00)
-TICK: 5   > MARKET: GOLDF#  : price=2365.00
+TICK: 5   > MARKET: Gold#  : price=2365.00
           ? EXPECT: session : state=POS_TRAILING * xe_status=XE_EXECUTED ! FAIL_MSG: "Failed to activate trailing stop"
 
 # Tick 6: Price drops below SL, and terminal position is closed (SL hit simulation)
-TICK: 6   > MARKET: GOLDF#  : price=2330.00
+TICK: 6   > MARKET: Gold#  : price=2330.00
           > INJECT: terminal: order_fill=false, ticket=0
           ? EXPECT: session : state=SYS_CLOSED * xe_status=XE_CLOSED_SL ! FAIL_MSG: "Failed to capture SL triggered close"

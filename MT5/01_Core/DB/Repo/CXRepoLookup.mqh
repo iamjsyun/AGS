@@ -1,6 +1,10 @@
 /**
  * @file CXRepoLookup.mqh
- * @brief [v1.0] Query-side implementations (Single Record Lookup) for CXSignalRepository
+ * @brief [v1.1] Query-side implementations (Single Record Lookup) for CXSignalRepository
+ *
+ * [Document History]
+ * v1.0: Initial implementation
+ * v1.1: Fix GetSignalBySid returning NULL due to DatabaseBind issue (switched to StringFormat)
  */
 
 public:
@@ -39,22 +43,24 @@ public:
          return NULL;
       }
 
-      string sql = "SELECT * FROM signals WHERE sid = ?";
+      // [v1.1 Fix] DatabaseBind ? issue - switching to direct injection for SIDs
+      string sql = StringFormat("SELECT * FROM signals WHERE sid = '%s'", sid);
       int hQuery = DatabasePrepare(m_db.GetHandle(), sql);
+      
       if(hQuery == INVALID_HANDLE) {
          RepositoryDebugLog(StringFormat("[DB-DEBUG] GetSignalBySid: DatabasePrepare failed. Error code: %d, sql: '%s'", GetLastError(), sql));
          return NULL;
       }
-
-      DatabaseBind(hQuery, 0, sid);
       
       CArrayObj list;
       ICXSignal* sig = NULL;
       int count = FetchSignals(hQuery, GetPointer(list));
       RepositoryDebugLog(StringFormat("[DB-DEBUG] GetSignalBySid: sid='%s', FetchSignals count: %d", sid, count));
+      
       if (count > 0) {
          sig = CX_CAST(ICXSignal, list.Detach(0));
       }
+      
       DatabaseFinalize(hQuery);
       return sig;
    }

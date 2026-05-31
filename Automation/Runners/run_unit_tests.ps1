@@ -56,11 +56,13 @@ Clear-ResultFile -path $unitResultPath
 
 # AGSTestRunner 가동을 위한 지시 파일
 "UNIT_TEST" | Out-File -FilePath "$CommonPath\scenario_target.txt" -Encoding ascii -NoNewline
-
+# Launching unit test runner
 Write-Host "Launching unit test runner..." -ForegroundColor Gray
 $configPath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath "..\..\Test\02_Config\unit_startup.ini"))
-$unitProcess = Start-Process -FilePath $TerminalPath -ArgumentList "/config:$configPath" -PassThru -NoNewWindow
+# Use explicit login arguments along with the config file to ensure reliable authentication
+$unitProcess = Start-Process -FilePath $TerminalPath -ArgumentList "/config:$configPath /login:315136196 /password:'xmDemo@2026' /server:'XMGlobal-MT5 7'" -PassThru -NoNewWindow
 if ($unitProcess -ne $null) {
+
     Write-Host "Unit test process started. PID: $($unitProcess.Id)" -ForegroundColor Gray
 } else {
     Write-Host "ERROR: Failed to launch unit test process!" -ForegroundColor Red

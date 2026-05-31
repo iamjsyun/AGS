@@ -1,0 +1,26 @@
+#==================================================================
+# [Unit Scenario] Risk Reject (Insufficient Margin) v2.0
+# Description: Verifies that entry is blocked when margin is low
+#==================================================================
+
+SCENARIO: SCEN_ENTRY_RISK_REJECT_V2 : "Risk Reject (Low Margin) v2.0"
+DEFINE: SYMBOL=Gold#, CNO=6001, SNO=01, GNO=01, DIR=1, TYPE=1, LOT=10.0
+
+PRICER: Gold# > TREND : start=2000.00, spread=20
+
+# T1: Discovery
+TICK: 1   > INJECT: signals : xa_entry=1, cno=6001, lot=10.0
+          ? EXPECT: session : state=ORD_READY
+
+# T2: Reality - Mock terminal with LOW equity/margin
+TICK: 2   > INJECT: account : balance=1000, equity=1000, free_margin=10
+          ? EXPECT: session : state=ORD_READY
+
+# T3: Validation - Reject expected
+TICK: 3   ? EXPECT: signal : xe_status=XE_ERROR ! FAIL_MSG: "Engine should have rejected entry due to margin"
+
+# T4: Heartbeat - Ensure still in error
+TICK: 4   ? EXPECT: session : state=SYS_ERROR
+
+# T5: Final - Persistence check
+TICK: 5   ? EXPECT: signal : xe_status=XE_ERROR

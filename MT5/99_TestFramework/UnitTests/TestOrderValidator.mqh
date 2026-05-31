@@ -26,7 +26,7 @@ public:
 
         CXOrderValidator validator(GetPointer(ctx));
         CXParam xp;
-        string sym = "GOLDF#";
+        string sym = "Gold#";
 
         // 1. Buy Limit 가격 보정 테스트 (StopsLevel 위반 시)
         // 상황: 현재 Ask=2000.0, StopsLevel=50 (0.50), 요청가=1999.8

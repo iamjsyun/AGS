@@ -31,7 +31,7 @@
 ? EXPECT: session : price_open=2350.50, status_msg="TE Rebound: Executing Market Entry..."
 
 # 3. 로깅 표준 준수 자동 검증 (ats_log 및 SQLite DB 감사)
-? EXPECT: audit : symbol="GOLDF#", log_type="EXEC-ENTRY", count=1
+? EXPECT: audit : symbol="Gold#", log_type="EXEC-ENTRY", count=1
 ```
 
 ### 2.2 파서 및 러너 매핑 설계

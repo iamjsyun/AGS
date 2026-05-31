@@ -29,7 +29,7 @@ AGS 테스트 프로젝트(`MT5/_Test`)는 가상 시장 데이터와 모의 거
 ## 2. 현 프레임워크의 한계점 (Pain Points)
 
 1.  **단일 심볼 시뮬레이션 제약**:
-    - 가상 프라이서(`CXVirtualPricer`) 및 액션 처리가 골드 선물(`GOLDF#`) 단일 통화/상품에 맞춰 하드코딩되거나 강결합되어 있어, 다중 심볼(유로/달러 병행 거래 등) 포지션을 연계 구동하는 포트폴리오 차원의 E2E 검증이 불가능합니다.
+    - 가상 프라이서(`CXVirtualPricer`) 및 액션 처리가 골드 선물(`Gold#`) 단일 통화/상품에 맞춰 하드코딩되거나 강결합되어 있어, 다중 심볼(유로/달러 병행 거래 등) 포지션을 연계 구동하는 포트폴리오 차원의 E2E 검증이 불가능합니다.
 2.  **VerifyExpectation의 하드코딩 구조 (OCP 위배)**:
     - 검증하려는 기대 속성(예: `xe_status`, `xa_exit`, `sl`, `tp`, `exists` 등)이 추가되거나 비교 대상이 변경될 때마다 `CXScenarioRunner.mq5` 내부의 `VerifyExpectation` 조건문을 직접 수정해야 하는 구조적 결합이 존재합니다.
 3.  **예외/지연 모킹의 정적 상태 관리**:
@@ -51,7 +51,7 @@ graph TD
     %% 2. Parsing & Control Layer
     subgraph Control_Layer [인터프리터 및 가상 시뮬레이터]
         P[TSDL Engine / Extended Parser]
-        VP_Pool[Virtual Pricer Pool - EURUSD/GOLDF#]
+        VP_Pool[Virtual Pricer Pool - EURUSD/Gold#]
         Mock_Platform[Dynamic Mock Terminal Platform]
     end
 

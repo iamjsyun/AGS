@@ -8,7 +8,7 @@
 **Status**: Draft  
 **Author**: Antigravity  
 **Target**: AGS v2.0 시스템 리팩토링 및 안정화 전체 프로세스  
-**Reference**: [GEMINI.md](file:///d:/Projects/AGS/GEMINI.md), [DESIGN_PRE_VALIDATED_BINDING_v2.0.md](file:///d:/Projects/AGS/_doc/DESIGN_PRE_VALIDATED_BINDING_v2.0.md), [PLAN_AGS_폴더_정비_및_빌드_복구_계획서_v1.0.md](file:///d:/Projects/AGS/_doc/PLAN_AGS_폴더_정비_및_빌드_복구_계획서_v1.0.md)
+**Reference**: [GEMINI.md](file:///d:/Projects/AGS/GEMINI.md), [DESIGN_PRE_VALIDATED_BINDING_v2.0.md](file:///d:/Projects/AGS/_doc/DESIGN_PRE_VALIDATED_BINDING_v2.0.md), [PLAN_AGS_폴더_정비_및_빌드_복구_계획서_v1.0.md](file:///d:/Projects/AGS/_doc/PLAN_AGS_폴더_정비_및_빌드_복구_계획서_v1.0.md), [PLAN_AGS_UNIT_TEST_SCENARIO_v1.0.md](file:///d:/Projects/AGS/_doc/PLAN_AGS_UNIT_TEST_SCENARIO_v1.0.md)
 
 ---
 
@@ -50,7 +50,7 @@ gantt
     section Phase 2: 코어 고도화
     PVB/UDP 아키텍처 적용 완료       :after p1, p2, 1d
     section Phase 3: 검증 & 안정화
-    TestPVBIntegrity 단위 테스트 검증  :after p2, p3, 2d
+    단위 테스트 시나리오 검증        :after p2, p3, 2d
     TSDL 시나리오 테스트 검증        :after p3, p4, 2d
 ```
 
@@ -63,9 +63,10 @@ gantt
 - 2계층 정합성 검사 체계(`CXIntegrityGuard` 및 `TestDependencyInjection`) 결합 확인.
 
 ### [Phase 3] 단위 테스트 및 시나리오 최종 검증
-- `TestPVBIntegrity.mqh`를 통한 13개 태스크 바인딩 및 Fail-Fast 시뮬레이션 성공 검증.
-- `bags.ps1` 및 `build_tests.ps1` 검증 통과.
-- TSDL 시나리오(트레이링 엔트리, 수동 강제 청산 등) 정상 작동 확인.
+- **단위 테스트**: 아토믹 로직 및 매니저 통합 테스트 전수 실행. 상세 시나리오는 [PLAN_AGS_UNIT_TEST_SCENARIO_v1.0.md](file:///d:/Projects/AGS/_doc/PLAN_AGS_UNIT_TEST_SCENARIO_v1.0.md) 참조.
+- **실행**: `run_unit_tests.ps1`을 통한 자동화 검증 및 `AGSTestRunner.mq5` 결과 확인.
+- **시나리오 테스트**: TSDL 시나리오(트레이링 엔트리, 수동 강제 청산 등) 정상 작동 확인.
+- **검증 도구**: `bags.ps1` 및 `build_tests.ps1` 검증 통과.
 
 ---
 
