@@ -30,6 +30,12 @@
 ## Trading Process Standard (v11.3 - Mandatory)
 모든 트레이딩 신호 처리 및 감시 작업은 다음의 **SSOC(Single Source of Calculation)** 원칙을 엄격히 준수해야 한다.
 
+### 0. Testing Standard (v1.2)
+- **Standard Symbol**: 모든 테스트(Unit, Scenario, Backtest) 및 개발 시 기본 심볼은 반드시 `GOLD#`을 사용한다.
+- **Test Credentials**: 테스트용 계정 정보는 `Login: 315136196`, `Password: xmDemo@2025`를 표준으로 사용한다.
+- **Login Preservation**: 테스트 시작 전 터미널의 기존 로긴 정보를 반드시 백업하고, 테스트 완료 후 백업된 데이터로 로긴 정보를 원복하여 사용자의 기존 환경을 보호해야 한다.
+- **Auto-Trading**: 터미널 실행 시 항상 `/experts:on` 옵션을 포함하여 자동 매매가 활성화된 상태로 테스트를 진행한다.
+
 ### 1. 전역 관리 서비스 의존성 (SSOC)
 1.  **Price Management**: 모든 가격 계산(시장가, SL/TP)은 반드시 `ICXPriceManager`를 통해서만 수행한다.
 2.  **Risk Management**: 로트(Lot) 및 마진 검증은 반드시 `ICXRiskManager`를 통해서만 수행한다. (Lot <= 0 또는 Lot > 50 금지)

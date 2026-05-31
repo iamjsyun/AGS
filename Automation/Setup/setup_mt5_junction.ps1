@@ -3,36 +3,28 @@
 
 $SourcePath = "D:\Projects\AGS"
 $TargetPath = "C:\Users\hsnote\AppData\Roaming\MetaQuotes\Terminal\BB16F565FAAA6B23A20C26C49416FF05\MQL5\Experts\AGS"
+$CommonTsdSource = "D:\Projects\AGS\Test\01_Scenarios"
+$CommonTsdTarget = "C:\Users\hsnote\AppData\Roaming\MetaQuotes\Terminal\Common\Files\AGS"
 
 Write-Host "=================================================="
-Write-Host "AGS MT5 Experts Junction Setup"
+Write-Host "AGS MT5 Junction Setup (Experts & TSDL)"
 Write-Host "=================================================="
 
-# 1. Check if source exists
-if (!(Test-Path -Path $SourcePath)) {
-    Write-Host "ERROR: Source project path not found: $SourcePath" -ForegroundColor Red
-    exit 1
-}
-
-# 2. Remove existing link/directory if exists
-if (Test-Path -Path $TargetPath) {
-    Write-Host "Removing existing target: $TargetPath" -ForegroundColor Yellow
-    # Handle junction removal carefully
-    if ((Get-Item $TargetPath).Attributes -match "ReparsePoint") {
-        # It's a junction/link
-        Remove-Item -Path $TargetPath -Force
-    } else {
-        # It's a real directory (backup safety or just delete)
-        Write-Host "Target is a real directory. Deleting recursively..." -ForegroundColor Gray
-        Remove-Item -Path $TargetPath -Recurse -Force
+function Create-Junction($src, $tgt) {
+    if (Test-Path -Path $tgt) {
+        Write-Host "Removing existing target: $tgt" -ForegroundColor Yellow
+        Remove-Item -Path $tgt -Recurse -Force -ErrorAction SilentlyContinue
     }
+    # Wait a moment for OS to release handles
+    Start-Sleep -Milliseconds 500
+    Write-Host "Creating Junction: $src -> $tgt" -ForegroundColor Cyan
+    New-Item -ItemType Junction -Path $tgt -Target $src -ErrorAction Stop | Out-Null
 }
 
-# 3. Create Junction
-Write-Host "Creating Junction: $SourcePath -> $TargetPath" -ForegroundColor Cyan
 try {
-    New-Item -ItemType Junction -Path $TargetPath -Target $SourcePath -ErrorAction Stop | Out-Null
-    Write-Host "SUCCESS: Junction established." -ForegroundColor Green
+    Create-Junction $SourcePath $TargetPath
+    Create-Junction $CommonTsdSource $CommonTsdTarget
+    Write-Host "SUCCESS: All junctions established." -ForegroundColor Green
 } catch {
     Write-Host "ERROR: Failed to create junction. Details: $($_.Exception.Message)" -ForegroundColor Red
     exit 1

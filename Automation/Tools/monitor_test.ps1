@@ -7,7 +7,7 @@ Write-Host "Cleaning old result if exists..."
 if (Test-Path $TargetFile) { Remove-Item $TargetFile }
 
 Write-Host "Launching Terminal..."
-$proc = Start-Process -FilePath $TerminalPath -ArgumentList "/config:$ConfigPath /login:315136196 /password:'xmDemo@2026' /server:'XMGlobal-MT5 7'" -PassThru
+$proc = Start-Process -FilePath $TerminalPath -ArgumentList "/config:$ConfigPath /login:315136196 /password:'xmDemo@2025' /server:'XMGlobal-MT5 7'" -PassThru
 
 Write-Host "Monitoring for $TargetFile (max 2 minutes)..."
 $timeout = 120

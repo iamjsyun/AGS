@@ -34,10 +34,11 @@ public:
 
         // 3. 0.00001 단위 (FX 등)
         double res3 = CXTickScraper::Scrape(1.085427, 0.00001, 5);
-        if(res3 == 1.08543) {
+        double expectedFX = NormalizeDouble(1.08543, 5);
+        if(MathAbs(res3 - expectedFX) < 0.0000001) {
             Print("  [PASS] FX 0.00001 Scrape Success.");
         } else {
-            PrintFormat("  [FAIL] FX 0.00001 Scrape Failed. Got: %.6f", res3);
+            PrintFormat("  [FAIL] FX 0.00001 Scrape Failed. Got: %.6f, Expected: %.6f", res3, expectedFX);
             allPassed = false;
         }
 

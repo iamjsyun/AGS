@@ -19,14 +19,17 @@ public:
 
         CXContext ctx;
         MockSymbolManager symMgr;
+        symMgr.SetStopsLevel(50); // Set to 0.50 points for testing
+        
         MockPriceManager priceMgr(GetPointer(ctx));
+        priceMgr.SetFixedPrice(2000.0, 1999.0); // Ask=2000.0, Bid=1999.0
         
         ctx.Register("sym_mgr", GetPointer(symMgr));
         ctx.Register("price_mgr", GetPointer(priceMgr));
 
         CXOrderValidator validator(GetPointer(ctx));
         CXParam xp;
-        string sym = "Gold#";
+        string sym = "GOLD#";
 
         // 1. Buy Limit 가격 보정 테스트 (StopsLevel 위반 시)
         // 상황: 현재 Ask=2000.0, StopsLevel=50 (0.50), 요청가=1999.8

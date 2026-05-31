@@ -49,8 +49,9 @@ function Build-File([string]$file, [string]$logName) {
 
 $ok1 = Build-File "..\..\MT5\99_TestFramework\AGSTestRunner.mq5" "build_testrunner.log"
 $ok2 = Build-File "..\..\MT5\99_TestFramework\AGSScenarioRunner.mq5" "build_scenariorunner.log"
+$ok3 = Build-File "..\..\MT5\99_TestFramework\AGSConnectivityTest.mq5" "build_conntest.log"
 
-if ($ok1 -and $ok2) {
+if ($ok1 -and $ok2 -and $ok3) {
     exit 0
 } else {
     exit 1

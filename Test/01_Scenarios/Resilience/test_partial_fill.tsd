@@ -1,8 +1,8 @@
 # test_partial_fill.tsd
 SCENARIO: SCEN_PARTIAL_FILL_01 : "Limit Order Partial Fill Dynamic Realignment"
-DEFINE: SYMBOL=Gold#, CNO=1007, SNO=01, GNO=01, DIR=1, TYPE=1
+DEFINE: SYMBOL=GOLD#, CNO=1007, SNO=01, GNO=01, DIR=1, TYPE=1
 
-PRICER: Gold# > TREND : trend_slope=0.0, jump_prob=0.0, start=2350.00, spread=20
+PRICER: GOLD# > TREND : trend_slope=0.0, jump_prob=0.0, start=2350.00, spread=20
 
 TICK: 1   > INJECT: signals : xa_entry=1, xa_exit=0, price_signal=2350.00, \
                               cno=1007, sno=01, dir=1, type=1, lot=0.1, \

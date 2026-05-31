@@ -4,9 +4,9 @@
 #==================================================================
 
 SCENARIO: SCEN_TRADE_SLIPPAGE_CONTROL : "Slippage Control and Correction"
-DEFINE: SYMBOL=Gold#, CNO=1010, SNO=01, GNO=01, DIR=1, TYPE=2
+DEFINE: SYMBOL=GOLD#, CNO=1010, SNO=01, GNO=01, DIR=1, TYPE=2
 
-PRICER: Gold# > TREND : start=2350.00, spread=20
+PRICER: GOLD# > TREND : start=2350.00, spread=20
 
 # Tick 1: Inject Limit signal at 2350.00
 TICK: 1   > INJECT: signals : xa_entry=1, price_signal=2350.00, \

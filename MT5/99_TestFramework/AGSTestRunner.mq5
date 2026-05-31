@@ -24,6 +24,7 @@
 #include "UnitTests\TestOrderValidator.mqh"
 #include "UnitTests\TestPriceRiskSubdivision.mqh"
 #include "UnitTests\TestSmartPVB.mqh"
+#include "UnitTests\TestDbIo.mqh"
 
 // Atomic Tests (Hyper-Atomization)
 #include "UnitTests\Atomic\TestTickScraper.mqh"
@@ -74,6 +75,7 @@ int OnInit() {
     if (TestOrderValidator::Run()) passed++; else failed++;
     if (TestPriceRiskSubdivision::Run()) passed++; else failed++;
     if (TestSmartPVB::Run()) passed++; else failed++;
+    if (TestDbIo::Run()) passed++; else failed++;
     
     Print("==================================================");
     PrintFormat("Test Run Complete. Suites Passed: %d, Suites Failed: %d", passed, failed);

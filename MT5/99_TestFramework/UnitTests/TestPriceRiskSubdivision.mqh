@@ -28,7 +28,7 @@ public:
 
         // 1. Price Normalization Test (Gold, 2 Digits, TickSize 0.01)
         double rawPrice = 2000.12345;
-        double normPrice = CXPriceNormalizer::Normalize(GetPointer(ctx), "Gold#", rawPrice);
+        double normPrice = CXPriceNormalizer::Normalize(GetPointer(ctx), "GOLD#", rawPrice);
         if(normPrice == 2000.12) {
             Print("  [PASS] Price Normalization (2 Digits) Success.");
         } else {

@@ -3,7 +3,7 @@
 
 $TerminalPath = "C:\Program Files\XM Global MT5\terminal64.exe"
 $Login = "315136196"
-$Password = "xmDemo@2026"
+$Password = "xmDemo@2025"
 $Server = "XMGlobal-MT5 7"
 
 Write-Host "Attempting terminal login..." -ForegroundColor Cyan

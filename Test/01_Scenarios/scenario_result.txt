@@ -1,0 +1,5 @@
+id=SCEN_RES_DOUBLE_ENTRY
+ticks=3
+passed=4
+failed=0
+status=PASSED

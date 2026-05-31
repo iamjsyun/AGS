@@ -4,9 +4,9 @@
 #==================================================================
 
 SCENARIO: SCEN_SYNC_PENDING_TO_ACTIVE_V2 : "Pending to Active (Limit Fill) v2.0"
-DEFINE: SYMBOL=Gold#, CNO=4201, SNO=01, GNO=01, DIR=1, TYPE=1, LOT=0.1
+DEFINE: SYMBOL=GOLD#, CNO=4201, SNO=01, GNO=01, DIR=1, TYPE=1, LOT=0.1
 
-PRICER: Gold# > TREND : start=2000.00, spread=20
+PRICER: GOLD# > TREND : start=2000.00, spread=20
 
 # T1: Discovery
 TICK: 1   > INJECT: signals : xa_entry=1, cno=4201, lot=0.1
@@ -17,7 +17,7 @@ TICK: 2   > INJECT: terminal: order_fill=false, ticket=89421
           ? EXPECT: session : state=ORD_TRAILING
 
 # T3: Tracking
-TICK: 3   > MARKET: Gold# : price=1999.00
+TICK: 3   > MARKET: GOLD# : price=1999.00
           ? EXPECT: session : state=ORD_TRAILING
 
 # T4: Reality - Broker fills the order

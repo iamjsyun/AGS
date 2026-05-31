@@ -4,9 +4,9 @@
 #==================================================================
 
 SCENARIO: SCEN_ZOMBIE_RECOVERY_01 : "Zombie Asset Recovery and Quarantine"
-DEFINE: SYMBOL=Gold#, CNO=1002, SNO=01, GNO=01, DIR=1, TYPE=0
+DEFINE: SYMBOL=GOLD#, CNO=1002, SNO=01, GNO=01, DIR=1, TYPE=0
 
-PRICER: Gold# > TREND : trend_slope=0.0, jump_prob=0.0, start=2350.00, spread=20
+PRICER: GOLD# > TREND : trend_slope=0.0, jump_prob=0.0, start=2350.00, spread=20
 
 # Tick 1: Inject position in terminal directly (simulating zombie position)
 TICK: 1   > INJECT: terminal: order_fill=true, ticket=99999

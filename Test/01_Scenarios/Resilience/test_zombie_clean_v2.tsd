@@ -4,9 +4,9 @@
 #==================================================================
 
 SCENARIO: SCEN_SYNC_ZOMBIE_CLEAN_V2 : "Zombie Session Cleanup v2.0"
-DEFINE: SYMBOL=Gold#, CNO=4001, SNO=01, GNO=01, DIR=1, TYPE=1, LOT=0.1
+DEFINE: SYMBOL=GOLD#, CNO=4001, SNO=01, GNO=01, DIR=1, TYPE=1, LOT=0.1
 
-PRICER: Gold# > TREND : trend_slope=0.0, jump_prob=0.0, start=2000.00, spread=20
+PRICER: GOLD# > TREND : trend_slope=0.0, jump_prob=0.0, start=2000.00, spread=20
 
 # T1: Discovery
 TICK: 1   > INJECT: signals : xa_entry=1, xa_exit=0, price_signal=2000.00, \

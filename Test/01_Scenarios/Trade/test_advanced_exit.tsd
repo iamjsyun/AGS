@@ -4,9 +4,9 @@
 #==================================================================
 
 SCENARIO: SCEN_ADV_EXIT_RESILIENCE : "Advanced Exit Resilience (E, F, G, H)"
-DEFINE: SYMBOL=Gold#, CNO=1001, SNO=99, GNO=01, DIR=1, TYPE=0, SID="1001-26052812-99-01-1-0", MAGIC=1001
+DEFINE: SYMBOL=GOLD#, CNO=1001, SNO=99, GNO=01, DIR=1, TYPE=0, SID="1001-26052812-99-01-1-0", MAGIC=1001
 
-PRICER: Gold# > TREND : trend_slope=0.0, start=2350.00, spread=20
+PRICER: GOLD# > TREND : trend_slope=0.0, start=2350.00, spread=20
 
 #--- [SCENARIO H: Manual Drift Sync] ---
 # Tick 1: Inject position in terminal with SL=2340, while signal (not yet injected) would have 2350.
