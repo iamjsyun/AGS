@@ -87,7 +87,7 @@
 - **Manual Test Mandate**: Do NOT execute any test runner scripts (e.g., `run_unit_tests.ps1`, `run_all_scenarios.ps1`) automatically. All test executions must be explicitly requested by the user.
 
 ## Runtime Path Standard (v1.0)
-- **Database Path**: The default SQLite database is `Terminal\Common\Files\AGS.db`. Both MQL5 and C# applications must use this common path for data synchronization.
+- **Database Path**: The default SQLite database is `Terminal\Common\Files\db\AGS.db`. Both MQL5 and C# applications must use this common path for data synchronization.
 - **Runtime Log Path**: All runtime logs must be stored in `Terminal\Common\Files\log\`. Log files are rotated hourly in `{sid}-{yymmdd-HH}0000.log` format.
 - **Cross-App Consistency**: C# applications interacting with AGS must strictly adhere to these paths to ensure seamless data and log sharing.
 

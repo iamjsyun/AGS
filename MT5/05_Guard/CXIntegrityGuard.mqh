@@ -54,11 +54,14 @@ public:
             return false;
         }
 
-        if(!FileIsExist(scenarioFile, 0) && !FileIsExist(scenarioFile, FILE_COMMON)) {
-            AddError(StringFormat("File not found on disk (Sandbox or Common path): '%s'", scenarioFile));
-            GenerateReport(false);
-            return false;
+        if(ext4 == ".tsd") {
+            if(!FileIsExist(scenarioFile, 0) && !FileIsExist(scenarioFile, FILE_COMMON)) {
+                AddError(StringFormat("Scenario file not found on disk (Sandbox or Common path): '%s'", scenarioFile));
+                GenerateReport(false);
+                return false;
+            }
         }
+        // [v2.2] Note: .db files are skipped for existence check as they are auto-created by CXDatabase::Open
 
         GenerateReport(true);
         return true;

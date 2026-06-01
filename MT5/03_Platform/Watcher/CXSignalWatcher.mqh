@@ -95,7 +95,9 @@ public:
     }
 
     void OnSignalDetected(ICXParam* xp) {
-        if(IS_VALID(m_sequence)) m_sequence.Pulse(xp);
+        // [v2.2] We no longer pulse the sequence per-signal. 
+        // Instead, we let the Dispatcher finish scanning, and Pulse() will handle the sequence.
+        // This avoids redundant LoadEntrySignals calls and prevents logger redirection issues.
     }
 
     virtual bool Bind() override {
@@ -105,14 +107,19 @@ public:
     virtual void Pulse(ICXParam* xp) override {
         if(IS_INVALID(m_dispatcher)) return;
         
+        // 1. Dispatch signals to listeners (notifying us via OnSignalDetected - currently silent)
+        // [v2.2] We don't use OnSignalDetected to trigger the sequence anymore to keep Watcher_Unified logs clean.
+        
         if(IS_VALID(xp)) {
             xp.SetContext(m_watcherContext);
             xp.SetSignal(NULL);
         }
         
-        m_dispatcher.Dispatch(xp);
+        // 2. Execute Watcher Sequence (Discovery -> Execute)
+        // All XP_LOG calls here will use m_watcherLogger by default.
+        if(IS_VALID(m_sequence)) m_sequence.Pulse(xp);
 
-        if(IS_VALID(m_sequence) && m_sequence.State() == WATCHER_ERROR) {
+        if(m_sequence.State() == WATCHER_ERROR) {
             string errorDetail = (IS_VALID(xp)) ? xp.GetString() : "Unknown Watcher Error";
             string enhancedError = StringFormat("[WATCHER-FATAL] Circuit Breaker Activated. Reason: %s", errorDetail);
             

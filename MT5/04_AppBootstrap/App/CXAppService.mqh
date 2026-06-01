@@ -81,6 +81,7 @@ public:
         SAFE_DELETE(m_exitManager);
         SAFE_DELETE(m_orderManager);
         SAFE_DELETE(m_positionManager);
+        SAFE_DELETE(m_factory);
         SAFE_DELETE(m_globalContext);
     }
 

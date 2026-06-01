@@ -17,18 +17,29 @@
 class CXSessionTask : public ICXTradingSession {
 private:
     ICXContext*         m_ctx;
+    ICXLogger*          m_sessionLogger; // [v2.2] Dedicated SID Logger
     ICXFluentSequence*  m_sequence;
     ICXSignal*          m_signal;
     string              m_sid;
     bool                m_isActive;
 
 public:
-    CXSessionTask(ICXContext* globalCtx, ICXSignal* sig) : m_isActive(true), m_signal(sig) {
+    CXSessionTask(ICXContext* globalCtx, ICXSignal* sig) : m_isActive(true), m_signal(sig), m_sessionLogger(NULL) {
         m_sid = sig.GetSid();
         m_ctx = globalCtx.CreateChildContext();
         if(IS_VALID(m_ctx)) {
             m_ctx.Register("signal", m_signal);
             
+            // [v2.2] Session-specific Logger Injection
+            ICXServiceFactory* factory = CX_GET_OBJ(globalCtx, "factory", ICXServiceFactory);
+            ICXConfig* config = globalCtx.GetConfig();
+            if(IS_VALID(factory) && IS_VALID(config)) {
+                m_sessionLogger = factory.CreateLogger(m_sid, config);
+                if(IS_VALID(m_sessionLogger)) {
+                    m_ctx.Register("logger", m_sessionLogger, true); // Override global logger in this child context
+                }
+            }
+
             // 시퀀스 생성 및 빌드
             m_sequence = new CXFluentSequence(m_ctx, "Task_" + m_sid);
             CXSequenceOrchestrator* orchestrator = CX_GET_OBJ(globalCtx, "orchestrator", CXSequenceOrchestrator);

@@ -16,10 +16,16 @@
 
 //--- [Group: Basic Configuration]
 input string         InpTargetMagics    = "1001,1002,3001,3002"; // Target Magic Numbers (CSV)
-input int            InpTimerInterval   =  200;                 // Timer Interval (Seconds)
+input int            InpTimerInterval   =  200;                 // Timer Interval (ms)
 input string         InpRemoteAddr      = "127.0.0.1:878";     // Remote Log Address (IP:Port)
 input string         InpDatabaseName    = "AGS.db";            // DB: Database Filename
 input bool           InpUseCommonPath   = true;                // DB: Use Terminal Common Path
+
+//--- [Group: Advanced Logging]
+input bool           InpLogSession      = true;                // Log: Enable SID-specific File Logs
+input bool           InpLogWatcher      = true;                // Log: Enable Watcher Activity Logs
+input bool           InpLogSystem       = true;                // Log: Enable System Kernel Logs
+input ENUM_LOG_LEVEL InpLogLevel        = LOG_LVL_INFO;        // Log: Minimum Verbosity Level
 
 //--- Global Instance
 CXAppService* g_app = NULL;
@@ -46,8 +52,13 @@ int OnInit() {
         return INIT_FAILED;
     }
  
-    // 1. Configuration object creation
-    g_config = new CXConfig(InpTargetMagics, InpTimerInterval, InpRemoteAddr, InpDatabaseName, InpUseCommonPath);
+    // 1. Configuration object creation (v2.2 Extended for Logging Control)
+    g_config = new CXConfig(InpTargetMagics, (double)InpTimerInterval/1000.0, InpRemoteAddr, 
+                            true, false, "", InpLogLevel,
+                            InpLogWatcher, false, true,
+                            InpLogSystem, false, true,
+                            InpLogSession, false, true, true,
+                            InpDatabaseName, InpUseCommonPath);
     if(IS_INVALID(g_config)) return INIT_FAILED;
 
     // 2. Service initialization and Startup (Integrity Check is internal)

@@ -93,7 +93,12 @@ public:
     virtual bool AssembleKernel(ICXContext* ctx, ICXConfig* cfg) override {
         if(IS_INVALID(ctx) || IS_INVALID(cfg)) return false;
 
+        // 0. Register Factory for downstream service creation
+        ctx.Register("factory", GetPointer(this), false);
+
         // 1. Core System Services
+        ctx.Register("config", cfg, false);
+
         ICXLogger* logger = CreateLogger("System", cfg);
         ctx.Register("logger", logger, true);
         ctx.Register("global_logger", logger, false);

@@ -23,21 +23,30 @@ public:
      * [v2.1 Update] Added DATABASE_OPEN_CREATE and auto-schema initialization
      */
     virtual bool Open(string dbName = "AGS.db", bool isCommon = true) override {
+        string finalPath = dbName;
+        if(isCommon && StringFind(dbName, "\\") == -1) {
+            if(!FolderCreate("db", FILE_COMMON)) {
+                int err = GetLastError();
+                if(err != 0 && err != 5019) PrintFormat("[DB-ERR] FolderCreate 'db' failed. Code:%d", err);
+            }
+            finalPath = "db\\" + dbName;
+        }
+
         int flags = DATABASE_OPEN_READWRITE | DATABASE_OPEN_CREATE;
         if(isCommon) flags |= DATABASE_OPEN_COMMON;
 
-        bool isNew = !FileIsExist(dbName, isCommon ? FILE_COMMON : 0);
-        m_db = DatabaseOpen(dbName, flags);
+        bool isNew = !FileIsExist(finalPath, isCommon ? FILE_COMMON : 0);
+        m_db = DatabaseOpen(finalPath, flags);
         
         if(m_db == INVALID_HANDLE) {
-            PrintFormat("[DB-ERR] Failed to open/create database %s. Error: %d", dbName, GetLastError());
+            PrintFormat("[DB-ERR] Failed to open/create database %s. Error: %d", finalPath, GetLastError());
             return false;
         }
 
         if(isNew) {
-            PrintFormat("[DB-CREATE-OK] New database created and initialized: %s", dbName);
+            PrintFormat("[DB-CREATE-OK] New database created and initialized: %s", finalPath);
         } else {
-            PrintFormat("[DB-OPEN-OK] Existing database opened successfully: %s", dbName);
+            PrintFormat("[DB-OPEN-OK] Existing database opened successfully: %s", finalPath);
         }
 
         // Initialize schema if not exists
