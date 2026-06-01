@@ -64,6 +64,15 @@ public:
         if(is_activated) {
             if(IS_INVALID(pActive)) { pActive = new CXParam(); ctx.Set(activeKey, pActive); }
             pActive.SetInt(1);
+            
+            // [v2.2 Update] Reflect active trailing state in DB for App UI visibility
+            IRepository* repo = CX_GET_OBJ(ctx, "repo", IRepository);
+            if(IS_VALID(repo)) {
+                sig.SetStatus((m_mode == TRAIL_MODE_ENTRY) ? XE_ENTRY_TRAILING : XE_STOP_TRAILING);
+                sig.SetStatusMsg((m_mode == TRAIL_MODE_ENTRY) ? "Trailing Entry Activated (ESTART reached)" : "Trailing Stop Activated (SSTART reached)");
+                repo.UpdateStatus(sig);
+            }
+
             XP_LOG_OK(xp, CXAuditFormatter::Build(Name(), xp, "Trailing ACTIVATED!"));
             if(m_mode == TRAIL_MODE_EXIT) return SESSION_TRAILING_STOP;
         }

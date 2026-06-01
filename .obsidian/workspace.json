@@ -185,6 +185,9 @@
   },
   "active": "1539268d69c420f8",
   "lastOpenFiles": [
+    "_doc/DESIGN_AGS_C#_CXFluentSequence_및_SDL_설계_검토서_v1.2.md",
+    "_doc/DESIGN_AGS_C#_CXFluentSequence_및_SDL_설계_검토서_v1.1.md",
+    "_doc/DESIGN_AGS_C#_CXFluentSequence_및_SDL_설계_검토서_v1.0.md",
     "_doc/보고서_AGS_구조_분석_및_비즈니스_논리_개선안_v1.1.md",
     "_doc/보고서_AGS_구조_분석_및_비즈니스_논리_개선안_v1.5.md",
     "MT5/AGS.ex5",
@@ -218,9 +221,6 @@
     "_doc/walkthrough_v1.0.md",
     "_doc/shell_scripts_v1.0.md",
     "_doc/PLAN_SCENARIO_RUNNER_TEST_v1.0.md",
-    "_doc/PLAN_INTEGRITY_GUARD_v2.2.md",
-    "_doc/REFACTORING_AGS_V2_v1.0.md",
-    "_doc/PLAN_TASK_UNIT_TEST_v1.2.md",
-    "_doc/DESIGN_AI_MODEL_MATRIX_v1.2.md"
+    "_doc/PLAN_INTEGRITY_GUARD_v2.2.md"
   ]
 }
