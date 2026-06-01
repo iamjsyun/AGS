@@ -59,7 +59,7 @@ public:
                 XP_LOG_WARN(xp, CXAuditFormatter::Build("INTENT-WATCH", xp, statusMsg));
                 
                 sig.SetStatus(finalStatus);
-                sig.SetXAExit(XA_CLOSED_COMPLETED);
+                sig.SetXAExit(XA_ACTIVE);
                 sig.SetStatusMsg(statusMsg);
                 
                 m_repo.ForceUpdateIntent(sig);
