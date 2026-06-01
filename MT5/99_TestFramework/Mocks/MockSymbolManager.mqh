@@ -5,18 +5,20 @@
 
 /**
  * @class MockSymbolManager
- * @brief 테스트 환경을 위한 ICXSymbolManager 모의 객체
+ * @brief Mock object for ICXSymbolManager for test environment
  */
 class MockSymbolManager : public ICXSymbolManager {
 private:
-    int m_stops_level;
+    int    m_stops_level;
+    double m_point;
 public:
-    MockSymbolManager() : m_stops_level(0) {}
+    MockSymbolManager() : m_stops_level(0), m_point(0.01) {}
     virtual ~MockSymbolManager() override {}
 
     void SetStopsLevel(int level) { m_stops_level = level; }
+    void SetPoint(string symbol, double pt) { m_point = pt; }
 
-    virtual double GetPoint(string symbol) override { return 0.01; }
+    virtual double GetPoint(string symbol) override { return m_point; }
     virtual int    GetDigits(string symbol) override { return 2; }
     virtual double GetTickSize(string symbol) override { return 0.01; }
     virtual int    GetStopsLevel(string symbol) override { return m_stops_level; }

@@ -8,7 +8,7 @@
 
 /**
  * @class CXTaskSync_V_Stale
- * @brief [Verify] DB 내 오래된 PENDING 데이터 강제 정리
+ * @brief [Verify] Force cleanup of stale PENDING data in DB
  */
 class CXTaskSync_V_Stale : public IXTask {
 private:
@@ -28,7 +28,7 @@ public:
         ICXSignal* sig = xp.GetSignal();
         if(IS_INVALID(sig)) return TASK_BREAK;
 
-        // XE_PENDING_REQ 상태로 5분 이상 방치된 데이터는 좀비로 간주
+        // Data left in XE_PENDING_REQ state for more than 5 minutes is considered a zombie
         if(sig.GetStatus() == XE_PENDING_REQ) {
             if(IsTimedOut()) { 
                 XP_LOG_WARN(xp, CXAuditFormatter::Build("SYNC-V-STALE", xp, "ALERT: Stale PENDING_REQ. Rolling back."));

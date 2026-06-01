@@ -2,9 +2,9 @@
 # Usage: powershell -ExecutionPolicy Bypass -File ./setup_mt5_junction.ps1
 
 $SourcePath = "D:\Projects\AGS"
-$TargetPath = "C:\Users\hsnote\AppData\Roaming\MetaQuotes\Terminal\BB16F565FAAA6B23A20C26C49416FF05\MQL5\Experts\AGS"
+$TargetPath = "C:\Users\hijsyun\AppData\Roaming\MetaQuotes\Terminal\540829AD6BE27960E4557E2CFD5C69E0\MQL5\Experts\AGS"
 $CommonTsdSource = "D:\Projects\AGS\Test\01_Scenarios"
-$CommonTsdTarget = "C:\Users\hsnote\AppData\Roaming\MetaQuotes\Terminal\Common\Files\AGS"
+$CommonTsdTarget = "C:\Users\hijsyun\AppData\Roaming\MetaQuotes\Terminal\Common\Files\AGS"
 
 Write-Host "=================================================="
 Write-Host "AGS MT5 Junction Setup (Experts & TSDL)"

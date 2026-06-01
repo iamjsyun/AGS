@@ -10,24 +10,24 @@
 
 /**
  * @class ICXAssetManager
- * @brief [v18.31] 터미널 물리 자산의 실존 보증, 자산 데이터 동기화 및 원자적 집행을 총괄하는 인터페이스 (Asset-Centric)
+ * @brief [v18.31] Interface managing terminal physical assets, ensuring data synchronization and atomic execution (Asset-Centric)
  */
 class ICXAssetManager : public CObject {
 public:
     virtual ~ICXAssetManager() {}
     virtual void Initialize(IRepository* repo, ICXContext* ctx, ICXServiceFactory* factory) = 0;
     
-    // 1. 진입/청산 집행 (Commands)
+    // 1. Execution Commands
     virtual ulong ExecuteEntry(ICXParam* xp) = 0; 
     virtual bool  ExecuteExit(ICXParam* xp, string sid) = 0; 
     
-    // 2. 물리 자산 조회 및 보증 (Queries)
+    // 2. Physical Asset Queries
     virtual bool  IsAssetLive(string sid) = 0;
     virtual bool  IsPositionExists(ulong ticket) = 0;
     virtual bool  IsOrderExists(ulong ticket) = 0;
     virtual bool  IsAssetExists(ulong ticket, int type) = 0;
 
-    // 3. 자산 데이터 동기화 (Asset SSOC)
+    // 3. Asset Data Synchronization (Asset SSOC)
     virtual bool  SyncToSignal(ICXSignal* sig) = 0;
     virtual int   CheckHistoryClosure(ulong ticket, string &reason) = 0;
     virtual double GetCurrentVolume(ulong ticket, bool isPosition) = 0;
@@ -36,11 +36,11 @@ public:
     virtual double GetCurrentTP(ulong ticket) = 0;
     virtual double GetCurrentProfit(ulong ticket) = 0;
     
-    // 4. 세션 관리 (Tasks)
+    // 4. Session Management Tasks
     virtual ICXTradingSession* CreateSession(ICXParam* xp) = 0;
     virtual ICXTradingSession* FindSessionBySid(const string sid) = 0;
     
-    // 5. 관리 루프 (Sync & Task Pulse)
+    // 5. Management Loops (Sync & Task Pulse)
     virtual void  Pulse(ICXParam* xp) = 0;
 };
 

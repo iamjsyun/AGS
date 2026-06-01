@@ -21,7 +21,7 @@
 
 /**
  * @class CXOrderManager
- * @brief 주문 전송 및 관리 전담 구현체 (v13.6 Subdivision Phase 1)
+ * @brief Implementation dedicated to order transmission and management (v13.6 Subdivision Phase 1)
  */
 class CXOrderManager : public IXOrderManager {
 private:

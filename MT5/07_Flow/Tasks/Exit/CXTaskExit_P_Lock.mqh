@@ -8,7 +8,7 @@
 
 /**
  * @class CXTaskExit_P_Lock
- * @brief [Persistence] DB에 청산 진행 중 상태 기록 (잠금)
+ * @brief [Persistence] Record liquidation in progress status in DB (Lock)
  */
 class CXTaskExit_P_Lock : public IXTask {
 private:

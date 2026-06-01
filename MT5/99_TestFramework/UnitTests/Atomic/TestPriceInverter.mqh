@@ -5,7 +5,7 @@
 
 /**
  * @class TestPriceInverter
- * @brief CXPriceInverter 원자 단위 테스트 (Hyper-Atomization)
+ * @brief CXPriceInverter atomic unit test (Hyper-Atomization)
  */
 class TestPriceInverter {
 public:

@@ -10,10 +10,25 @@
 #include "..\..\01_Core\Interfaces\ICXServiceFactory.mqh"
 #include "..\..\01_Core\Macros\CXMacros.mqh"
 #include "..\..\06_Orchestration\Sequence\CXSequenceOrchestrator.mqh"
+#include "CXSignalDispatcher.mqh"
+
+class CXSignalWatcher;
+
+/**
+ * @class CXWatcherSignalListener
+ * @brief Helper class to delegate signal events to CXSignalWatcher (Workaround for lack of multiple inheritance)
+ */
+class CXWatcherSignalListener : public ICXSignalListener {
+private:
+    CXSignalWatcher* m_owner;
+public:
+    CXWatcherSignalListener(CXSignalWatcher* owner) : m_owner(owner) {}
+    virtual void OnSignalDetected(ICXParam* xp) override;
+};
 
 /**
  * @class CXSignalWatcher
- * @brief DB ?좏샇 ?뚯씠釉붿쓣 媛먯떆?섍퀬 ?곸젅???먯궛 ?쒖뒪?ъ뿉 ?좊떦?섎뒗 紐⑤뱢 (?낅┰ 濡쒓렇 吏??
+ * @brief Monitors DB signal tables and allocates them to appropriate asset sessions (Event-Driven support)
  */
 class CXSignalWatcher : public ICXSignalWatcher {
 private:
@@ -25,6 +40,8 @@ private:
     ICXLogger*              m_watcherLogger;
     ICXFluentSequence*      m_sequence;
     CXSequenceOrchestrator* m_orchestrator;
+    CXSignalDispatcher*     m_dispatcher;
+    CXWatcherSignalListener* m_listener;
     string                  m_mode;
 
 public:
@@ -50,6 +67,10 @@ public:
             m_watcherContext.Register("factory", factory);
         }
 
+        m_dispatcher = new CXSignalDispatcher(repo);
+        m_listener = new CXWatcherSignalListener(GetPointer(this));
+        m_dispatcher.AddListener(m_listener);
+
         m_sequence = new CXFluentSequence(m_watcherContext, "Watcher" + m_mode + "Seq");
         m_orchestrator = CX_GET_OBJ(m_globalContext, "orchestrator", CXSequenceOrchestrator);
         
@@ -66,9 +87,15 @@ public:
     }
 
     virtual ~CXSignalWatcher() override {
+        SAFE_DELETE(m_dispatcher);
+        SAFE_DELETE(m_listener);
         SAFE_DELETE(m_sequence);
         SAFE_DELETE(m_watcherContext);
         SAFE_DELETE(m_watcherLogger);
+    }
+
+    void OnSignalDetected(ICXParam* xp) {
+        if(IS_VALID(m_sequence)) m_sequence.Pulse(xp);
     }
 
     virtual bool Bind() override {
@@ -76,16 +103,16 @@ public:
     }
 
     virtual void Pulse(ICXParam* xp) override {
-        if(IS_INVALID(m_sequence)) return;
+        if(IS_INVALID(m_dispatcher)) return;
         
         if(IS_VALID(xp)) {
             xp.SetContext(m_watcherContext);
             xp.SetSignal(NULL);
         }
         
-        m_sequence.Pulse(xp);
+        m_dispatcher.Dispatch(xp);
 
-        if(m_sequence.State() == WATCHER_ERROR) {
+        if(IS_VALID(m_sequence) && m_sequence.State() == WATCHER_ERROR) {
             string errorDetail = (IS_VALID(xp)) ? xp.GetString() : "Unknown Watcher Error";
             string enhancedError = StringFormat("[WATCHER-FATAL] Circuit Breaker Activated. Reason: %s", errorDetail);
             
@@ -94,12 +121,15 @@ public:
             Print(enhancedError);
         }
 
-        // [v11.4 Mandate] Dangling Pointer Protection
         if(IS_VALID(xp)) {
             xp.SetSignal(NULL);
             xp.SetContext(NULL);
         }
     }
 };
+
+void CXWatcherSignalListener::OnSignalDetected(ICXParam* xp) {
+    if(IS_VALID(m_owner)) m_owner.OnSignalDetected(xp);
+}
 
 #endif

@@ -11,8 +11,8 @@
 
 /**
  * @class CXTaskTrail_L_Evaluate
- * @brief 극점 대비 반등/되돌림 거리를 계산하여 트리거 여부 판단
- * [v2.1 Smart PVB] GetRequiredServices 구현
+ * @brief Determines whether to trigger by calculating the rebound/retraction distance from the extreme point
+ * [v2.1 Smart PVB] Implementation of GetRequiredServices
  */
 class CXTaskTrail_L_Evaluate : public IXTask {
 private:

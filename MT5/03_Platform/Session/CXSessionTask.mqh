@@ -12,7 +12,7 @@
 
 /**
  * @class CXSessionTask
- * @brief [v18.30] 자산별 독립적 최적화 로직(TE/TS)을 수행하는 경량 실행 단위
+ * @brief [v18.30] Lightweight execution unit that performs independent optimization logic (TE/TS) per asset
  */
 class CXSessionTask : public ICXTradingSession {
 private:

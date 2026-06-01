@@ -11,10 +11,11 @@
 #include "..\..\01_Core\Interfaces\IXTerminalPlatform.mqh"
 #include "..\..\01_Core\Macros\CXMacros.mqh"
 #include "..\..\01_Core\Logger\CXAuditFormatter.mqh"
+#include "..\..\01_Core\App\CXTransaction.mqh"
 
 /**
  * @class CXAssetRecord
- * @brief [v18.30] 자산의 물리적 속성만을 보유하는 경량 DTO
+ * @brief [v18.30] Lightweight DTO holding only the physical properties of an asset
  */
 class CXAssetRecord : public CObject {
 public:
@@ -32,7 +33,7 @@ public:
 
 /**
  * @class CXAssetManager
- * @brief [v18.31] 터미널 물리 자산의 실존 보증, 자산 데이터 동기화 및 단위 세션 관리를 총괄하는 관리자
+ * @brief [v18.31] Manager responsible for terminal physical asset existence assurance, asset data synchronization, and unit session management
  */
 class CXAssetManager : public ICXAssetManager {
 private:
@@ -84,103 +85,60 @@ public:
     }
 
     virtual ulong ExecuteEntry(ICXParam* xp) override {
-        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Start");
-        if(IS_INVALID(m_orderMgr) || IS_INVALID(xp)) { AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Abort: invalid orderMgr or xp"); return 0; }
+        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Transaction Start");
+        if(IS_INVALID(m_orderMgr) || IS_INVALID(xp)) return 0;
         ICXSignal* sig = xp.GetSignal();
-        if(IS_INVALID(sig)) { AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Abort: invalid signal"); return 0; }
+        if(IS_INVALID(sig)) return 0;
 
-        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Duplicate SID check");
         if(FindSessionBySid(sig.GetSid()) != NULL || IsAssetLive(sig.GetSid())) {
             XP_LOG_ERROR(xp, StringFormat("[ASSET-MGR] Entry Rejected. SID %s already active.", sig.GetSid()));
-            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Abort: duplicate SID active");
             return 0;
         }
 
-        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Creating price manager");
-        ICXPriceManager* priceMgr = m_factory.CreatePriceManager(m_globalContext);
-        if(IS_VALID(priceMgr)) {
-            string sym = sig.GetSymbol(); int dir = sig.GetDir();
-            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Calculating exec price");
-            double execPrice = priceMgr.CalculateExecPrice(xp, sym, dir, sig.GetType(), sig.GetTELimit());
-            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Calculating base price");
-            double basePrice = (sig.GetType() == ORDER_MARKET) ? priceMgr.GetMarketPrice(sym, dir) : execPrice;
-            sig.SetPriceOpen(execPrice);
-            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Calculating SL");
-            sig.SetPriceSL(priceMgr.CalculateSL(xp, sym, dir, basePrice, sig.GetSL()));
-            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Calculating TP");
-            sig.SetPriceTP(priceMgr.CalculateTP(xp, sym, dir, basePrice, sig.GetTP()));
-            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Deleting price manager");
-            SAFE_DELETE(priceMgr);
-        }
-        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Price manager setup complete");
+        // [v1.4 Atomic Transaction Pattern]
+        CXEntryTransaction* tx = new CXEntryTransaction(xp, m_globalRepo, m_orderMgr, m_factory);
+        if(IS_INVALID(tx)) return 0;
 
-        // [v1.2 Atomic Lock Mandate] 브로커 호출 전 '요청 중' 상태로 DB 즉시 고정 (중복 진입 방어)
-        sig.SetStatus(XE_PENDING_REQ);
-        sig.SetStatusMsg("Sending Request to Broker...");
-        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Updating signal status in DB");
-        if(IS_VALID(m_globalRepo)) m_globalRepo.UpdateStatus(sig);
-        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Signal status updated in DB");
-
-        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Calling m_orderMgr.ExecuteEntry");
-        bool success = m_orderMgr.ExecuteEntry(xp);
-        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - m_orderMgr.ExecuteEntry finished, result: " + (string)success);
-        if(success) {
-            ulong ticket = sig.GetTicket();
-            AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Ticket received: " + (string)ticket);
+        ulong ticket = 0;
+        if(tx.Execute()) {
+            ticket = sig.GetTicket();
             if(ticket > 0) {
                 CXAssetRecord* rec = new CXAssetRecord(ticket, sig.GetSid());
                 rec.symbol = sig.GetSymbol(); rec.lot = sig.GetLot(); rec.price_open = sig.GetPriceOpen();
                 m_assets.Add(rec);
-                AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Success");
-                return ticket;
+                AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - Transaction Success");
             }
         }
-        AssetManagerDebugLog("CXAssetManager::ExecuteEntry() - End (failed to execute or get ticket)");
-        return 0;
+        delete tx;
+        return ticket;
     }
 
     virtual bool ExecuteExit(ICXParam* xp, string sid) override {
-        if(IS_INVALID(m_exitMgr)) return false;
+        AssetManagerDebugLog("CXAssetManager::ExecuteExit() - Transaction Start");
+        if(IS_INVALID(m_exitMgr) || IS_INVALID(xp)) return false;
 
-        // 1. 이미 목록에 해당 SID의 레코드가 있는지 찾기
         CXAssetRecord* rec = FindRecordBySid(sid);
-
-        // [v1.0 Scenario H] Pre-Close Shadowing Sync
-        // Ensure the signal object in the parameter context is fully synchronized with terminal reality before exit.
         ICXSignal* sig = xp.GetSignal();
         if(IS_INVALID(sig)) {
             sig = m_globalRepo.GetSignalBySid(sid);
             if(IS_VALID(sig)) xp.SetSignal(sig);
         }
 
-        if(IS_VALID(sig)) {
-            // Force rescan of terminal volume, price, SL, TP to handle manual drift
-            SyncToSignal(sig);
-        }
+        if(IS_VALID(sig)) SyncToSignal(sig);
 
-        // 2. 만약 목록에 없으면 터미널을 직접 확인 (수동 종료 대응 및 무결성 보충)
-        if(IS_INVALID(rec)) {
-            // 터미널 플랫폼을 통해 해당 SID의 티켓 검색
-            ulong ticket = m_terminal.GetTicketBySid(0, sid); // Magic=0은 전수 검색 시도
-            if(ticket <= 0) {
-                // 물리적으로도 없으면 이미 청산된 것으로 간주 (성공 반환하여 DB 정리 유도)
-                return true; 
-            }
-            // 물리 티켓이 있으면 청산 진행 (xp에 이미 sig가 세팅됨)
-            if(IS_VALID(sig)) {
-                bool res = m_exitMgr.ExecuteExit(xp);
-                return res;
-            }
-            return false;
-        }
+        // [v1.4 Atomic Transaction Pattern]
+        CXExitTransaction* tx = new CXExitTransaction(xp, m_globalRepo, m_exitMgr);
+        if(IS_INVALID(tx)) return false;
 
-        if(m_exitMgr.ExecuteExit(xp)) {
-            // 성공 시 레코드 및 해당 태스크 제거
-            RemoveRecordBySid(sid);
+        bool success = false;
+        if(tx.Execute()) {
+            if(IS_VALID(rec)) RemoveRecordBySid(sid);
             PurgeTaskBySid(sid);
-            return true;
+            success = true;
+            AssetManagerDebugLog("CXAssetManager::ExecuteExit() - Transaction Success");
         }
-        return false;
+        delete tx;
+        return success;
     }
 
     // --- [Queries] ---

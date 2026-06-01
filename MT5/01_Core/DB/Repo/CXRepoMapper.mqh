@@ -8,7 +8,7 @@
 
 /**
  * @class CXDbMapper
- * @brief DatabaseColumnXXX 함수들을 타입별로 오버로딩하여 매크로에서 안전하게 호출 가능하도록 함
+ * @brief Overload DatabaseColumnXXX functions by type for safe macro-based access
  */
 class CXDbMapper {
 public:
@@ -25,7 +25,7 @@ public:
 
 /**
  * @class CXSqlMapper
- * @brief 값을 SQLite 쿼리용 문자열로 변환하는 오버로딩 함수 집합.
+ * @brief Collection of overloading functions for SQLite query string conversion
  */
 class CXSqlMapper {
 public:

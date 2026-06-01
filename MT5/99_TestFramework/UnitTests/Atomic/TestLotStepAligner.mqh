@@ -5,7 +5,7 @@
 
 /**
  * @class TestLotStepAligner
- * @brief CXLotStepAligner 원자 단위 테스트 (Hyper-Atomization)
+ * @brief CXLotStepAligner atomic unit test (Hyper-Atomization)
  */
 class TestLotStepAligner {
 public:
@@ -13,7 +13,7 @@ public:
         Print("--- Running TestLotStepAligner (Atomic) ---");
         bool allPassed = true;
 
-        // 1. 표준 0.01 스텝 정렬
+        // 1. Standard 0.01 step alignment
         double res1 = CXLotStepAligner::Align(0.1234, 0.01, 0.01);
         if(res1 == 0.12) {
             Print("  [PASS] Standard 0.01 Align Success.");
@@ -22,7 +22,7 @@ public:
             allPassed = false;
         }
 
-        // 2. 0.1 스텝 정렬
+        // 2. 0.1 step alignment
         double res2 = CXLotStepAligner::Align(0.58, 0.1, 0.1);
         if(res2 == 0.5) {
             Print("  [PASS] Standard 0.1 Align Success.");
@@ -31,7 +31,7 @@ public:
             allPassed = false;
         }
 
-        // 3. 최소 로트 미달 테스트
+        // 3. Minimum lot under-threshold test
         double res3 = CXLotStepAligner::Align(0.005, 0.01, 0.01);
         if(res3 == 0.0) {
             Print("  [PASS] Under MinLot correctly handled.");

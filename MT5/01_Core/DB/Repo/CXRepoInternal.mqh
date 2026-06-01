@@ -35,7 +35,7 @@ private:
       while (DatabaseRead(req)) {
          CXSignal* sig = new CXSignal();
 
-         //--- [SSOT] SIGNAL_SCHEMA_FIELDS 매크로와 CXDbMapper 오버로딩을 이용한 자동 매핑
+         //--- [SSOT] Automatic mapping using SIGNAL_SCHEMA_FIELDS macro and CXDbMapper overloading
          #define X(type, name, dbType, getter) \
             if((idx = GetColumnIndex(req, #name)) >= 0) CXDbMapper::Fill(req, idx, sig.name);
          SIGNAL_SCHEMA_FIELDS

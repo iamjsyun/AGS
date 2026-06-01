@@ -9,8 +9,8 @@
 
 /**
  * @class CXTaskExit_R_Order
- * @brief [Request] 브로커에 청산(Close/Cancel) 주문 송신
- * [v2.1 Smart PVB] GetRequiredServices 구현
+ * @brief [Request] Send liquidation (Close/Cancel) order to broker
+ * [v2.1 Smart PVB] Implementation of GetRequiredServices
  */
 class CXTaskExit_R_Order : public IXTask {
 private:

@@ -8,7 +8,7 @@
 
 /**
  * @class CXTaskExit_V_Error
- * @brief [Verify] 청산 실패 시 재시도 스케줄링 및 대응
+ * @brief [Verify] Retry scheduling and response upon liquidation failure
  */
 class CXTaskExit_V_Error : public IXTask {
 public:
@@ -19,7 +19,7 @@ public:
         ICXSignal* sig = xp.GetSignal();
         if(IS_INVALID(sig)) return TASK_BREAK;
 
-        // 청산 요청 후 장시간 소멸되지 않을 경우
+        // When the asset is not removed for a long time after liquidation request
         if(sig.GetXAExit() == XA_ACTIVE && sig.GetStatus() < XE_CLOSED_SIGNAL) {
             if(IsTimedOut()) {
                 string err = "Liquidation Failed after persistent retries";

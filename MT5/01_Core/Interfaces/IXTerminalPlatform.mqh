@@ -7,16 +7,16 @@
 
 /**
  * @interface IXTerminalPlatform
- * @brief MT5 터미널 및 브로커 연동 전담 물리 플랫폼 인터페이스 (Standard 로깅 및 예외 처리 내장)
+ * @brief Physical platform interface dedicated to MT5 terminal and broker integration (includes standard logging and exception handling)
  */
 class IXTerminalPlatform : public CObject {
 public:
     virtual ~IXTerminalPlatform() {}
 
-    //--- Magic Number 설정
+    //--- Set Magic Number
     virtual void SetMagic(ulong magic) = 0;
 
-    //--- 1. 거래 실행 (Trade Operations)
+    //--- 1. Trade Operations
     virtual bool PositionOpen(ICXParam* xp, ICXSignal* sig, double price, double sl, double tp) = 0;
     virtual bool OrderOpen(ICXParam* xp, ICXSignal* sig, double price, double sl, double tp) = 0;
     virtual bool PositionModify(ICXParam* xp, ulong ticket, double sl, double tp) = 0;
@@ -24,14 +24,14 @@ public:
     virtual bool PositionClose(ICXParam* xp, ulong ticket) = 0;
     virtual bool OrderDelete(ICXParam* xp, ulong ticket) = 0;
 
-    //--- 2. 계좌 정보 조회 (Account Information)
+    //--- 2. Account Information
     virtual double GetAccountBalance() = 0;
     virtual double GetAccountEquity() = 0;
     virtual double GetAccountMargin() = 0;
     virtual double GetAccountFreeMargin() = 0;
     virtual long   GetAccountLeverage() = 0;
 
-    //--- 3. 실물 자산 상태 조회 (Asset Queries)
+    //--- 3. Asset Queries
     virtual bool IsPositionExists(ulong ticket) = 0;
     virtual bool IsOrderExists(ulong ticket) = 0;
     virtual double GetPositionVolume(ulong ticket) = 0;
@@ -53,7 +53,7 @@ public:
     virtual bool   SweepBySid(ICXParam* xp, ulong magic, string sid) = 0;
     virtual bool   SweepByMagic(ICXParam* xp, ulong magic) = 0;
     
-    //--- 4. 호환성 및 부가 유틸리티
+    //--- 4. Compatibility and Additional Utilities
     virtual ulong GetLastResultDeal() = 0;
     virtual ulong GetLastResultOrder() = 0;
     virtual uint  GetLastRetCode() = 0;

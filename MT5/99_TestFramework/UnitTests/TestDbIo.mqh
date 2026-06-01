@@ -7,7 +7,7 @@
 
 /**
  * @class TestDbIo
- * @brief DB I/O 자동 생성 및 터미널 접속 상태 검증
+ * @brief DB I/O automated creation and terminal connection state verification
  */
 class TestDbIo {
 public:
@@ -20,7 +20,7 @@ public:
             Print("DEBUG: [INFO] Running in Strategy Tester mode.");
         }
 
-        // 1. 터미널 접속 상태 확인
+        // 1. Check terminal connection status
         bool isConnected = (bool)TerminalInfoInteger(TERMINAL_CONNECTED);
         if(isConnected) {
             PrintFormat("DEBUG: [PASS] Terminal is CONNECTED to %s", AccountInfoString(ACCOUNT_SERVER));
@@ -28,7 +28,7 @@ public:
             Print("DEBUG: [WARN] Terminal is NOT CONNECTED!");
         }
 
-        // 2. DB 자동 생성 및 I/O 테스트
+        // 2. DB automatic creation and I/O test
         CXDatabase db;
         if(db.Open("TestUnit.db", false)) {
             Print("  [PASS] DB Connection Success: TestUnit.db is ready.");

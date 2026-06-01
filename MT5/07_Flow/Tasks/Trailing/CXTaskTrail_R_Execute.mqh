@@ -11,8 +11,8 @@
 
 /**
  * @class CXTaskTrail_R_Execute
- * @brief 트레일링 트리거 발생 시 실제 거래 실행 (진입/청산)
- * [v2.1 Smart PVB] GetRequiredServices 구현
+ * @brief Executes actual trade (entry/liquidation) when a trailing trigger occurs
+ * [v2.1 Smart PVB] Implementation of GetRequiredServices
  */
 class CXTaskTrail_R_Execute : public IXTask {
 private:

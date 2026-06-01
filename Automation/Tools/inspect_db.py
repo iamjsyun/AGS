@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-db_path = r"C:\Users\hsnote\AppData\Roaming\MetaQuotes\Terminal\Common\Files\AGS.db"
+db_path = r"C:\Users\hijsyun\AppData\Roaming\MetaQuotes\Terminal\Common\Files\AGS.db"
 
 if not os.path.exists(db_path):
     print(f"DB not found at {db_path}")

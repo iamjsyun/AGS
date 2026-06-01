@@ -11,8 +11,8 @@
 
 /**
  * @class CXTaskTrail_V_Extremum
- * @brief 활성화된 상태에서 최근 극점(Extreme) 가격을 추적하고 기록
- * [v2.1 Smart PVB] GetRequiredServices 구현
+ * @brief Tracks and records the recent extreme price while in an active state
+ * [v2.1 Smart PVB] Implementation of GetRequiredServices
  */
 class CXTaskTrail_V_Extremum : public IXTask {
 private:

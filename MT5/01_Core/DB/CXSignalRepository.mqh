@@ -22,7 +22,7 @@ class CXSignalRepository : public IRepository {
 private:
    IDatabase* m_db;
    
-   //--- 고정 쿼리 핸들 캐싱 (Performance Optimization)
+   //--- Cache query handles (Performance Optimization)
    int        m_hActiveSignals;
    int        m_hSignalBySid;
 

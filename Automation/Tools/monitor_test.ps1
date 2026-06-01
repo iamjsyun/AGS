@@ -1,5 +1,5 @@
 # Manual Monitor Script
-$TargetFile = "C:\Users\hsnote\AppData\Roaming\MetaQuotes\Terminal\Common\Files\AGS\scenario_result.txt"
+$TargetFile = "C:\Users\hijsyun\AppData\Roaming\MetaQuotes\Terminal\Common\Files\AGS\scenario_result.txt"
 $TerminalPath = "C:\Program Files\XM Global MT5\terminal64.exe"
 $ConfigPath = "D:\Projects\AGS\Test\02_Config\unit_startup.ini"
 

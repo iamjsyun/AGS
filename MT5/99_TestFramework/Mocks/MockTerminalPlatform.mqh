@@ -16,7 +16,7 @@
 
 /**
  * @class MockAsset
- * @brief 모의 주문 및 포지션 데이터를 관리하기 위한 구조체
+ * @brief Structure for managing simulated order and position data
  */
 class MockAsset : public CObject {
 public:
@@ -40,7 +40,7 @@ public:
 
 /**
  * @class MockHistoryDeal
- * @brief 모의 과거 체결(Deal) 기록
+ * @brief Simulated historical deal records
  */
 class MockHistoryDeal : public CObject {
 public:
@@ -52,7 +52,7 @@ public:
 
 /**
  * @class MockHistoryOrder
- * @brief 모의 과거 주문(Order) 기록
+ * @brief Simulated historical order records
  */
 class MockHistoryOrder : public CObject {
 public:
@@ -62,7 +62,7 @@ public:
 
 /**
  * @class MockTerminalPlatform
- * @brief MT5 API 호출을 시뮬레이션하는 모의 클래스 (Subdivision Phase 1 Support)
+ * @brief Mock class simulating MT5 API calls (Subdivision Phase 1 Support)
  */
 class MockTerminalPlatform : public IXTerminalPlatform {
 private:

@@ -1,0 +1,46 @@
+{
+  "scenarios": [
+    {
+      "id": "PIPE.INFRA.INIT.DB.CONN",
+      "name": "DB_Connection_Verify",
+      "scope": { "stage": "INFRA", "seq": "INIT", "task": "CXDatabase", "fn": "Open" },
+      "ea": "AGS_Main.ex5",
+      "chartId": 0
+    },
+    {
+      "id": "PIPE.ENTRY.DET.WATCHER.VALIDATE",
+      "name": "Signal_Symbol_Validation",
+      "scope": { "stage": "ENTRY", "seq": "DET", "task": "CXSignalWatcher", "fn": "ValidateSymbol" },
+      "ea": "AGS_Main.ex5",
+      "chartId": 0
+    },
+    {
+      "id": "PIPE.ENTRY.EXEC.ORDER.SEND",
+      "name": "Order_Send_Execution",
+      "scope": { "stage": "ENTRY", "seq": "EXEC", "task": "CXOrderManager", "fn": "SendOrder" },
+      "ea": "AGS_Main.ex5",
+      "chartId": 0
+    },
+    {
+      "id": "PIPE.ENTRY.VAL.MGR.MARGIN",
+      "name": "Margin_Check_Validation",
+      "scope": { "stage": "ENTRY", "seq": "VAL", "task": "CXEntryManager", "fn": "CheckMargin" },
+      "ea": "AGS_Main.ex5",
+      "chartId": 0
+    },
+    {
+      "id": "PIPE.ACTIVE.MONITOR.POS.SYNC",
+      "name": "Position_Sync_Terminal",
+      "scope": { "stage": "ACTIVE", "seq": "MONITOR", "task": "CXTaskActive_V_Terminal", "fn": "SyncPosition" },
+      "ea": "AGS_Main.ex5",
+      "chartId": 0
+    },
+    {
+      "id": "PIPE.EXIT.FINAL.FINALIZE.CLEAN",
+      "name": "Finalize_Context_Cleanup",
+      "scope": { "stage": "EXIT", "seq": "FINAL", "task": "CXTaskExit_P_Finalize", "fn": "ClearContext" },
+      "ea": "AGS_Main.ex5",
+      "chartId": 0
+    }
+  ]
+}

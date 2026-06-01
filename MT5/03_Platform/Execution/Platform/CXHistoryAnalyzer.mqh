@@ -8,8 +8,8 @@
 
 /**
  * @class CXHistoryAnalyzer
- * @brief [v1.0] 히스토리 데이터 해석 전담 클래스 (Subdivision Phase 1)
- * @details MT5 히스토리 Deal 및 Order를 조회하여 청산 사유(SL/TP/CANCELED 등)를 판별함
+ * @brief [v1.0] Dedicated class for interpreting history data (Subdivision Phase 1)
+ * @details Queries MT5 history Deals and Orders to determine the reason for closure (SL/TP/CANCELED, etc.)
  */
 class CXHistoryAnalyzer : public ICXHistoryAnalyzer {
 private:
@@ -20,7 +20,7 @@ public:
     virtual ~CXHistoryAnalyzer() override {}
 
     /**
-     * @brief 티켓 번호를 기반으로 히스토리 데이터를 분석하여 청산 상태 반환
+     * @brief Analyze history data based on ticket number and return closure status
      */
     virtual int Analyze(ulong ticket, string &outReason) override {
         if(IS_INVALID(m_terminal)) {

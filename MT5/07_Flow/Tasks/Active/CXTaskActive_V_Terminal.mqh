@@ -8,7 +8,7 @@
 
 /**
  * @class CXTaskActive_V_Terminal
- * @brief [Verify] 터미널 실물 상태 확인 (SL/TP 히트 여부 등)
+ * @brief [Verify] Verify terminal physical state (SL/TP hits, etc.)
  */
 class CXTaskActive_V_Terminal : public IXTask {
 private:

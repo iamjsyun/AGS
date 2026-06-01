@@ -5,15 +5,15 @@
 #include "ICXParam.mqh"
 #include "ICXContext.mqh"
 
-// Task 실행 결과 제어 상수
-#define TASK_CONTINUE   -1  // 다음 태스크로 진행
-#define TASK_BREAK      -2  // 현재 상태 유지하고 체인 실행 중단 (이번 틱 종료)
-#define TASK_YIELD      -3  // 비동기 대기. 현재 상태를 유지하되 다음 틱에서 다시 실행
+// Constants for controlling task execution results
+#define TASK_CONTINUE   -1  // Proceed to the next task
+#define TASK_BREAK      -2  // Maintain current state and interrupt chain execution (terminate current tick)
+#define TASK_YIELD      -3  // Asynchronous wait. Maintain current state but re-execute in the next tick
 
 /**
  * @interface IXTask
- * @brief 시퀀스 스테이지(Stage) 내부에서 단일 책임을 수행하는 원자적 태스크 인터페이스
- * [v2.1 Smart PVB] 의존성 계약(Dependency Contract)을 위한 GetRequiredServices 추가
+ * @brief Interface for atomic tasks performing a single responsibility within a sequence stage
+ * [v2.1 Smart PVB] Added GetRequiredServices for dependency contract
  */
 class IXTask : public CObject {
 protected:
@@ -30,22 +30,22 @@ public:
     virtual string Name() = 0;
     
     /**
-     * @brief [v2.0] 의존성 주입 및 캐싱 검증
+     * @brief [v2.0] Dependency injection and caching verification
      */
     virtual bool Bind(ICXContext* ctx) { return m_isBound = true; }
     
     /**
-     * @brief [v2.1] 해당 태스크가 필요로 하는 서비스 키워드 리스트 반환 (Smart PVB)
-     * @details 예: "repo, asset_mgr"
+     * @brief [v2.1] Returns a list of service keywords required by this task (Smart PVB)
+     * @details Example: "repo, asset_mgr"
      */
     virtual string GetRequiredServices() { return ""; }
 
     /**
-     * @brief 태스크 로직 실행
+     * @brief Execute task logic
      */
     virtual int Execute(ICXParam* xp, ICXContext* ctx) = 0;
 
-    //-- 속성 관리
+    //-- Property management
     void SetMaxRetries(int r) { m_maxRetries = r; }
     void SetTimeout(int s) { m_timeoutSeconds = s; }
     

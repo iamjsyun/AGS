@@ -7,12 +7,12 @@
 
 /**
  * @class CXPriceNormalizer
- * @brief [v1.0] TickSize 및 Digits 기반 가격 정규화 전담 클래스 (Subdivision Phase 1)
+ * @brief [v1.0] Class dedicated to price normalization based on TickSize and Digits (Subdivision Phase 1)
  */
 class CXPriceNormalizer : public CObject {
 public:
     /**
-     * @brief 소수점 및 호가 단위(TickSize)에 맞게 가격 보정
+     * @brief Adjust price according to decimal places and tick size
      */
     static double Normalize(ICXContext* ctx, string symbol, double price) {
         if(price <= 0) return 0;

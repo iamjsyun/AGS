@@ -11,8 +11,8 @@
 
 /**
  * @class CXTaskTrail_V_Activate
- * @brief 트레일링(TE/TS) 활성화 여부를 감시하고 상태 기록
- * [v2.1 Smart PVB] GetRequiredServices 구현
+ * @brief Monitors whether trailing (TE/TS) is activated and records the state
+ * [v2.1 Smart PVB] Implementation of GetRequiredServices
  */
 class CXTaskTrail_V_Activate : public IXTask {
 private:

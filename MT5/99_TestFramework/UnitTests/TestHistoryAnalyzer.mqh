@@ -6,7 +6,7 @@
 
 /**
  * @class TestHistoryAnalyzer
- * @brief CXHistoryAnalyzer의 청산 사유 판별 로직을 검증하는 단위 테스트
+ * @brief Unit test to verify CXHistoryAnalyzer's liquidation reason identification logic
  */
 class TestHistoryAnalyzer {
 public:

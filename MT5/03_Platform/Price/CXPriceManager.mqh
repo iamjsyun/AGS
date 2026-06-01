@@ -10,7 +10,7 @@
 
 /**
  * @class CXPriceManager
- * @brief 가격 계산 및 무결성 검증 전문 구현체 (v11.6 Subdivision)
+ * @brief Specialized implementation for price calculation and integrity verification (v11.6 Subdivision)
  */
 class CXPriceManager : public ICXPriceManager {
 private:

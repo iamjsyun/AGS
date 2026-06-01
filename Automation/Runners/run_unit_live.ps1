@@ -2,7 +2,7 @@
 $TerminalPath = "C:\Program Files\XM Global MT5\terminal64.exe"
 if (!(Test-Path -Path $TerminalPath)) { $TerminalPath = "D:\Program Files\XM Global MT5\terminal64.exe" }
 $CommonPath = "$env:APPDATA\MetaQuotes\Terminal\Common\Files\AGS"
-$TerminalDataPath = "C:\Users\hsnote\AppData\Roaming\MetaQuotes\Terminal\BB16F565FAAA6B23A20C26C49416FF05"
+$TerminalDataPath = "C:\Users\hijsyun\AppData\Roaming\MetaQuotes\Terminal\540829AD6BE27960E4557E2CFD5C69E0"
 $ConfigBackupPath = "D:\Projects\AGS\.tmp_unit_live_backup"
 
 function Kill-Terminal {

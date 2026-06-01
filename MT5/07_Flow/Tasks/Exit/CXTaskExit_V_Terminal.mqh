@@ -8,7 +8,7 @@
 
 /**
  * @class CXTaskExit_V_Terminal
- * @brief [Verify] 터미널 내 실물 자산 소멸 확인 (L3 Verification)
+ * @brief [Verify] Verify deletion of physical asset in terminal (L3 Verification)
  */
 class CXTaskExit_V_Terminal : public IXTask {
 private:

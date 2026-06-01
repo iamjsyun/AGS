@@ -7,7 +7,7 @@
 
 /**
  * @class CXParam
- * @brief ?몃젅?대뵫 ?대깽??諛??곗씠?곕? ?꾨떖?섎뒗 湲곕낯 DTO ?대옒??
+ * @brief Basic DTO class for passing trading events and data.
  */
 class CXParam : public ICXParam {
 protected:

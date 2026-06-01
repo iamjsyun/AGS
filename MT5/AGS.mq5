@@ -9,15 +9,16 @@
 #property strict
 
 //--- Include core service
-#include "App\CXAppService.mqh"
-#include "App\CXServiceFactory.mqh"
-#include "..\02_Domain\Models\CXConfig.mqh"
+#include "04_AppBootstrap\App\CXAppService.mqh"
+#include "04_AppBootstrap\App\CXServiceFactory.mqh"
+#include "02_Domain\Models\CXConfig.mqh"
+#include "01_Core\App\ea_manager.mqh"
 
 //--- [Group: Basic Configuration]
 input string         InpTargetMagics    = "1001,1002,3001,3002"; // Target Magic Numbers (CSV)
 input int            InpTimerInterval   =  200;                 // Timer Interval (Seconds)
 input string         InpRemoteAddr      = "127.0.0.1:878";     // Remote Log Address (IP:Port)
-input string         InpDatabaseName    = "ATS.db";            // DB: Database Filename
+input string         InpDatabaseName    = "AGS.db";            // DB: Database Filename
 input bool           InpUseCommonPath   = true;                // DB: Use Terminal Common Path
 
 //--- Global Instance
@@ -73,14 +74,13 @@ void OnDeinit(const int reason) {
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
 //+------------------------------------------------------------------+
-void OnTick() {
-    if(IS_VALID(g_app)) g_app.Pulse(EVENT_TICK);
-}
+void OnTick() { if(IS_VALID(g_app)) g_app.Pulse(EVENT_TICK); }
 
 //+------------------------------------------------------------------+
 //| Expert timer function                                            |
 //+------------------------------------------------------------------+
 void OnTimer() {
+    CheckEaCommand();
     if(IS_VALID(g_app)) g_app.Pulse();
 }
 

@@ -18,7 +18,7 @@ public:
       string columns = "";
       string values = "";
 
-      //--- [SSOT] SIGNAL_SCHEMA_FIELDS 매크로와 CXSqlMapper 오버로딩을 이용한 동적 SQL 생성
+      //--- [SSOT] Dynamic SQL generation using SIGNAL_SCHEMA_FIELDS macro and CXSqlMapper overloading
       #define X(type, name, dbType, getter) \
          if(#name != "id") { \
             columns += (columns == "" ? "" : ", ") + #name; \
@@ -39,7 +39,7 @@ public:
    }
 
    /**
-    * @brief [v19.40] 테스트용 전체 초기화 (Truncate)
+    * @brief [v19.40] Full reset for testing (Truncate)
     */
    bool TruncateSignals() {
       if(IS_INVALID(m_db)) return false;

@@ -9,8 +9,8 @@
 
 /**
  * @class CXTaskIntentWatch
- * @brief 외부 강제 청산 의도 모니터링
- * [v2.1 Smart PVB] GetRequiredServices 구현
+ * @brief Monitoring for external forced liquidation intent
+ * [v2.1 Smart PVB] Implement GetRequiredServices
  */
 class CXTaskIntentWatch : public IXTask {
 private:

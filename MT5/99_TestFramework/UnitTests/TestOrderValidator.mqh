@@ -9,7 +9,7 @@
 
 /**
  * @class TestOrderValidator
- * @brief CXOrderValidator의 가격 보정 및 거리 검증 로직을 테스트함
+ * @brief Tests CXOrderValidator's price correction and distance verification logic
  */
 class TestOrderValidator {
 public:

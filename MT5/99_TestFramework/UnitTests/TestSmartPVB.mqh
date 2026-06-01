@@ -14,7 +14,7 @@
 
 /**
  * @class TestSmartPVB
- * @brief [v2.2] 자동 태스크 스캔 및 서비스 계약(Contract) 기반 의존성 무결성 테스트
+ * @brief [v2.2] Automated task scan and service contract-based dependency integrity test
  */
 class TestSmartPVB {
 private:

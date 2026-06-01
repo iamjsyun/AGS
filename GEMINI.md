@@ -80,10 +80,17 @@
 - **Safety Protocol**: Every transaction must include an explicit safety guard and confirmation check before execution.
 - **Resource Management**: Strictly manage all memory and handles; no automatic resource cleanup is permitted without explicit validation.
 
-## Engineering Standards (v1.0)
-- **Automation Script Naming Rule**: `Automation/` 폴더 내의 모든 스크립트는 `[Action]_[Target]_[Detail].[ext]` 형식을 따르며, 약어 사용을 지양하고 작업 내용을 명확히 드러낸다.
-    - **권장 형식**: `build_ags_main.ps1`, `run_unit_tests.ps1`, `inspect_db_sqlite.py`
-    - **금지 형식**: `bags.ps1` (약어), `cags.ps1` (모호함)
-    - **주요 Action 키워드**: `build`, `check`, `run`, `inspect`, `sync`, `setup`
+- **Language Standard**: All source code comments MUST be written in English to ensure international maintainability and clarity.
+
+## Operational Constraints (v1.0)
+- **Manual Build Mandate**: Do NOT execute any build scripts (e.g., `build_ags_main.ps1`, `check_ags_syntax.ps1`) automatically. All builds must be explicitly requested by the user.
+- **Manual Test Mandate**: Do NOT execute any test runner scripts (e.g., `run_unit_tests.ps1`, `run_all_scenarios.ps1`) automatically. All test executions must be explicitly requested by the user.
+
+## Runtime Path Standard (v1.0)
+- **Database Path**: The default SQLite database is `Terminal\Common\Files\AGS.db`. Both MQL5 and C# applications must use this common path for data synchronization.
+- **Runtime Log Path**: All runtime logs must be stored in `Terminal\Common\Files\log\`. Log files are rotated hourly in `{sid}-{yymmdd-HH}0000.log` format.
+- **Cross-App Consistency**: C# applications interacting with AGS must strictly adhere to these paths to ensure seamless data and log sharing.
+
+
 
 

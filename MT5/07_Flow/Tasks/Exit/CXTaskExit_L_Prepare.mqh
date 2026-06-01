@@ -7,7 +7,7 @@
 
 /**
  * @class CXTaskExit_L_Prepare
- * @brief [Logic] 청산 조건 검증 및 준비 (I/O 없음)
+ * @brief [Logic] Liquidation condition verification and preparation (No I/O)
  */
 class CXTaskExit_L_Prepare : public IXTask {
 public:

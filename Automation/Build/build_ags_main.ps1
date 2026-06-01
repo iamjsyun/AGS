@@ -19,7 +19,7 @@ if ($null -eq $compilerPath) {
     Write-Host "ERROR: MetaEditor64.exe not found in any candidate paths!" -ForegroundColor Red
     exit 1
 }
-$projectPath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath "..\..\MT5\04_AppBootstrap\AGS.mq5"))
+$projectPath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath "..\..\MT5\AGS.mq5"))
 $logDir = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath "..\..\_log"))
 
 # Create log directory if it doesn't exist

@@ -30,12 +30,12 @@
 
 /**
  * @class CXTaskFactory
- * @brief [v2.2] 문자열 기반 IXTask 객체 생성 및 목록 반환 (Smart PVB Support)
+ * @brief [v2.2] String-based IXTask object creation and list return (Smart PVB Support)
  */
 class CXTaskFactory {
 public:
     /**
-     * @brief [v2.2] 엔진에서 사용 가능한 모든 태스크 명칭 목록 반환
+     * @brief [v2.2] Returns a list of all task names available in the engine
      */
     static void GetAvailableTasks(CArrayString &list) {
         list.Clear();

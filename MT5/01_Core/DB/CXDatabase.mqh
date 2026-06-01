@@ -7,7 +7,7 @@
 
 /**
  * @class CXDatabase
- * @brief 샌드박스화된 세션 전용 SQLite 핸들러
+ * @brief Sandbox-enabled session-exclusive SQLite handler
  */
 class CXDatabase : public IDatabase {
 private:
@@ -22,7 +22,7 @@ public:
      * @brief [v14.47 Sync] Unified Open logic matching interface
      * [v2.1 Update] Added DATABASE_OPEN_CREATE and auto-schema initialization
      */
-    virtual bool Open(string dbName = "ATS.db", bool isCommon = true) override {
+    virtual bool Open(string dbName = "AGS.db", bool isCommon = true) override {
         int flags = DATABASE_OPEN_READWRITE | DATABASE_OPEN_CREATE;
         if(isCommon) flags |= DATABASE_OPEN_COMMON;
 

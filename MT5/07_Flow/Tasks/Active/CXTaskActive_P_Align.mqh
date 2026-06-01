@@ -9,8 +9,8 @@
 
 /**
  * @class CXTaskActive_P_Align
- * @brief [Persistence] 터미널 상태와 DB 상태 동기화
- * [v2.1 Smart PVB] GetRequiredServices 구현
+ * @brief [Persistence] Synchronize terminal state with DB state
+ * [v2.1 Smart PVB] Implement GetRequiredServices
  */
 class CXTaskActive_P_Align : public IXTask {
 private:

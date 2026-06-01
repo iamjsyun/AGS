@@ -9,7 +9,7 @@
 
 /**
  * @class CXTaskExit_P_Finalize
- * @brief [Persistence] DB 상태 최종 확정 (CLOSED)
+ * @brief [Persistence] Finalize DB status (CLOSED)
  */
 class CXTaskExit_P_Finalize : public IXTask {
 private:

@@ -12,8 +12,8 @@
 
 /**
  * @class CXTerminalPlatform
- * @brief MT5 터미널 및 브로커 연동 구상 플랫폼 클래스 (v11.1 Logging & MT5 API Encapsulation)
- * @details [v1.0 Subdivision] 히스토리 분석 로직을 CXHistoryAnalyzer로 위임함
+ * @brief MT5 terminal and broker integration platform class (v11.1 Logging & MT5 API Encapsulation)
+ * @details [v1.0 Subdivision] Delegate history analysis logic to CXHistoryAnalyzer
  */
 class CXTerminalPlatform : public IXTerminalPlatform {
 private:
@@ -28,7 +28,7 @@ public:
         m_trade.SetExpertMagicNumber(magic);
     }
 
-    //--- 1. 거래 실행 (Trade Operations)
+    //--- 1. Trade Execution (Trade Operations)
     
     virtual bool PositionOpen(ICXParam* xp, ICXSignal* sig, double price, double sl, double tp) override {
         if(IS_INVALID(sig)) return false;
@@ -182,14 +182,14 @@ public:
         return res;
     }
 
-    //--- 2. 계좌 정보 조회 (Account Information)
+    //--- 2. Account Information Inquiry (Account Information)
     virtual double GetAccountBalance() override { return AccountInfoDouble(ACCOUNT_BALANCE); }
     virtual double GetAccountEquity() override { return AccountInfoDouble(ACCOUNT_EQUITY); }
     virtual double GetAccountMargin() override { return AccountInfoDouble(ACCOUNT_MARGIN); }
     virtual double GetAccountFreeMargin() override { return AccountInfoDouble(ACCOUNT_MARGIN_FREE); }
     virtual long   GetAccountLeverage() override { return AccountInfoInteger(ACCOUNT_LEVERAGE); }
 
-    //--- 3. 실물 자산 상태 조회 (Asset Queries)
+    //--- 3. Physical Asset Status Inquiry (Asset Queries)
     virtual bool IsPositionExists(ulong ticket) override { return (ticket > 0 && PositionSelectByTicket(ticket)); }
     virtual bool IsOrderExists(ulong ticket) override { return (ticket > 0 && OrderSelect(ticket)); }
 
@@ -208,7 +208,7 @@ public:
     virtual string GetOrderComment(ulong ticket) override { return OrderSelect(ticket) ? OrderGetString(ORDER_COMMENT) : ""; }
 
     /**
-     * @brief [v1.0 Subdivision] 히스토리 분석 로직을 CXHistoryAnalyzer로 위임
+     * @brief [v1.0 Subdivision] Delegate history analysis logic to CXHistoryAnalyzer
      */
     virtual int CheckHistoryClosure(ulong ticket, string &outReason) override {
         CXHistoryAnalyzer analyzer(GetPointer(this));
@@ -313,7 +313,7 @@ public:
         return all_cleared;
     }
 
-    //--- 4. 호환성 및 부가 유틸리티
+    //--- 4. Compatibility and Additional Utilities
     virtual ulong GetLastResultDeal() override { return m_trade.ResultDeal(); }
     virtual ulong GetLastResultOrder() override { return m_trade.ResultOrder(); }
     virtual uint  GetLastRetCode() override { return m_trade.ResultRetcode(); }

@@ -8,8 +8,8 @@
 
 /**
  * @class CXTaskPending_V_Sync
- * @brief 터미널 실물 상태 동기화 및 의도 명령 감시
- * [v2.1 Smart PVB] GetRequiredServices 구현
+ * @brief Synchronize terminal physical state and monitor intent commands
+ * [v2.1 Smart PVB] Implementation of GetRequiredServices
  */
 class CXTaskPending_V_Sync : public IXTask {
 private:

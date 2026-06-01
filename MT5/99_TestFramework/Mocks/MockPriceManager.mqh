@@ -11,7 +11,7 @@
 
 /**
  * @class MockPriceManager
- * @brief ICXPriceManager를 구현하고 가상 가격 생성기(CXVirtualPricer)와 바인딩되는 테스트 전용 모의 객체
+ * @brief Test-only mock object that implements ICXPriceManager and binds with CXVirtualPricer
  */
 class MockPriceManager : public CXPriceManager {
 private:
@@ -24,7 +24,7 @@ public:
     virtual ~MockPriceManager() {}
 
     /**
-     * @brief 고정된 기본 가격 설정 (Pricer가 없을 때 사용)
+     * @brief Set fixed base price (used when Pricer is not available)
      */
     void SetFixedPrice(double ask, double bid) {
         m_fixed_ask = ask;
@@ -32,14 +32,14 @@ public:
     }
 
     /**
-     * @brief 가상 가격 생성기 인스턴스를 설정
+     * @brief Set virtual price generator instance
      */
     void SetPricer(CXVirtualPricer* pricer) {
         m_pricer = pricer;
     }
 
     /**
-     * @brief 방향에 따른 가상 Ask/Bid 반환 (시장가)
+     * @brief Returns virtual Ask/Bid based on direction (market price)
      */
     virtual double GetMarketPrice(string symbol, int dir) override {
         if(CheckPointer(m_pricer) != POINTER_INVALID) {
@@ -52,7 +52,7 @@ public:
     }
 
     /**
-     * @brief 방향에 따른 가상 청산 가격 반환
+     * @brief Returns virtual liquidation price based on direction
      */
     virtual double GetLiquidationPrice(string symbol, int dir) override {
         if(CheckPointer(m_pricer) != POINTER_INVALID) {

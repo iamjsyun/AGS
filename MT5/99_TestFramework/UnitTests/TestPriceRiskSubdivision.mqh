@@ -10,7 +10,7 @@
 
 /**
  * @class TestPriceRiskSubdivision
- * @brief CXPriceNormalizer 및 CXRiskEvaluator의 원자적 로직을 검증함
+ * @brief Verifies the atomic logic of CXPriceNormalizer and CXRiskEvaluator
  */
 class TestPriceRiskSubdivision {
 public:
@@ -46,7 +46,7 @@ public:
         }
 
         // 3. Risk Evaluation: Margin Sufficiency Test
-        // 상황: FreeMargin=10000, Required=5000 -> Success
+        // Scenario: FreeMargin=10000, Required=5000 -> Success
         if(CXRiskEvaluator::IsMarginSufficient(GetPointer(xp), GetPointer(ctx), 5000.0)) {
             Print("  [PASS] Margin Sufficiency (Normal) Success.");
         } else {
@@ -54,7 +54,7 @@ public:
             allPassed = false;
         }
 
-        // 상황: FreeMargin=10000, Required=15000 -> Fail
+        // Scenario: FreeMargin=10000, Required=15000 -> Fail
         if(!CXRiskEvaluator::IsMarginSufficient(GetPointer(xp), GetPointer(ctx), 15000.0)) {
             Print("  [PASS] Margin Insufficiency (Over) correctly detected.");
         } else {

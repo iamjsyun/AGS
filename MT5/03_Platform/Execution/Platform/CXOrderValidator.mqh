@@ -10,7 +10,7 @@
 
 /**
  * @class CXOrderValidator
- * @brief [v1.0] 브로커 거절 방지를 위한 가격 및 거리 보정 로직 (Subdivision Phase 1)
+ * @brief [v1.0] Price and distance correction logic to prevent broker rejection (Subdivision Phase 1)
  */
 class CXOrderValidator : public ICXOrderValidator {
 private:
@@ -21,7 +21,7 @@ public:
     virtual ~CXOrderValidator() override {}
 
     /**
-     * @brief [SSOC] StopsLevel 기반 진입 가격 자동 보정
+     * @brief [SSOC] Automatic execution price adjustment based on StopsLevel
      */
     virtual double ValidateExecPrice(ICXParam* xp, string symbol, int dir, int type, double requestedPrice) override {
         if(type == ORDER_MARKET) return requestedPrice;
@@ -57,7 +57,7 @@ public:
     }
 
     /**
-     * @brief SL/TP 최소 허용 거리 검증 (V11.5 Standard 준수)
+     * @brief Validate minimum allowed distance for SL/TP (Compliant with V11.5 Standard)
      */
     virtual bool ValidateStops(ICXParam* xp, string symbol, int dir, double openPrice, double sl, double tp) override {
         ICXSymbolManager* symMgr = CX_GET_OBJ(m_ctx, "sym_mgr", ICXSymbolManager);

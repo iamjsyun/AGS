@@ -5,24 +5,24 @@
 
 /**
  * @class CXLotStepAligner
- * @brief [v1.0] 브로커 로트 스텝(Volume Step)에 따른 정밀 정렬 전문 원자 클래스 (Hyper-Atomization)
+ * @brief [v1.0] Atomic class specialized in precision alignment according to broker volume step (Hyper-Atomization)
  */
 class CXLotStepAligner : public CObject {
 public:
     /**
-     * @brief 로트 사이즈를 최소 단위 및 스텝에 맞춰 정렬 (절사 방식)
-     * @param lot 요청 로트
-     * @param minLot 최소 로트 (예: 0.01)
-     * @param lotStep 로트 증감 단위 (예: 0.01)
+     * @brief Align lot size to minimum unit and step (Truncation method)
+     * @param lot Requested lot
+     * @param minLot Minimum lot (e.g., 0.01)
+     * @param lotStep Lot increment/decrement unit (e.g., 0.01)
      */
     static double Align(double lot, double minLot, double lotStep) {
         if(lot < minLot) return 0;
         if(lotStep <= 0) return lot;
         
-        // 정밀도 보정을 위한 소량의 엡실론 가산 후 절사
+        // Truncate after adding a small epsilon for precision compensation
         double aligned = minLot + MathFloor((lot - minLot) / lotStep + 0.0000001) * lotStep;
         
-        // 자릿수 자동 계산
+        // Automatic calculation of digits
         int digits = 0;
         if(lotStep < 0.1) digits = 2;
         else if(lotStep < 1.0) digits = 1;
