@@ -92,6 +92,13 @@ public:
                     ICXParam* pStart = new CXParam();
                     pStart.SetDouble(currentPrice);
                     globalCtx.Set(startPriceKey, pStart);
+
+                    // [v2.6] Store Original Base Price for Advantage Calculation
+                    string basePriceKey = "TE_BasePrice_" + sig.GetSid();
+                    double refPrice = (sig.GetPriceOpen() > 0) ? sig.GetPriceOpen() : sig.GetPriceSignal();
+                    ICXParam* pBase = new CXParam();
+                    pBase.SetDouble(refPrice);
+                    globalCtx.Set(basePriceKey, pBase);
                 }
             }
 

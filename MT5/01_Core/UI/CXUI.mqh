@@ -142,9 +142,10 @@ public:
 
         for(int i = 0; i < 10; i++) {
             if(i < renderCount) {
+                CXTerminalAsset* asset = CX_CAST(CXTerminalAsset, assetList.At(i));
                 ICXSignal* sig = CX_CAST(ICXSignal, activeList.At(i));
-                if(IS_VALID(sig)) {
-                    UpdateSlot(i, sig, priceMgr, assetMgr);
+                if(IS_VALID(sig) && IS_VALID(asset)) {
+                    UpdateSlot(i, sig, asset.ticket, priceMgr, assetMgr);
                 } else {
                     ClearSlot(i);
                 }
@@ -162,11 +163,13 @@ private:
     /**
      * @brief Bind and output active signal data to individual slots
      */
-    void UpdateSlot(int slotIdx, ICXSignal* sig, ICXPriceManager* priceMgr, ICXAssetManager* assetMgr) {
+    void UpdateSlot(int slotIdx, ICXSignal* sig, ulong terminalTicket, ICXPriceManager* priceMgr, ICXAssetManager* assetMgr) {
         string symbol = sig.GetSymbol();
         int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
         double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
         double dirSign = (sig.GetDir() == CX_DIR_BUY) ? -1.0 : 1.0;
+        
+        ulong ticket = (terminalTicket > 0) ? terminalTicket : sig.GetTicket();
 
         // Acquire real-time base price (SSOC)
         double currentPrice = 0;
@@ -193,11 +196,11 @@ private:
         if(isPosition) {
             // Position mode: Display TP and Trailing Stop info
             p0_lbl = "TP";
-            p0 = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentTP(sig.GetTicket()) : 0;
+            p0 = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentTP(ticket) : 0;
             if(p0 <= 0) p0 = sig.GetPriceTP();
             // [v2.5] Fallback: Calculate TP from points if missing
             if(p0 <= 0 && sig.GetTP() > 0) {
-                double openP = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentPriceOpen(sig.GetTicket(), true) : sig.GetPriceOpen();
+                double openP = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentPriceOpen(ticket, true) : sig.GetPriceOpen();
                 if(openP > 0) p0 = openP + (sig.GetTP() * point * -dirSign);
             }
             
@@ -217,7 +220,6 @@ private:
             // Pending order mode: Display entry price and Trailing Entry info
             p0_lbl = "LIMIT";  
             p0 = 0;
-            ulong ticket = sig.GetTicket();
             if(ticket > 0 && IS_VALID(assetMgr)) {
                 p0 = assetMgr.GetCurrentPriceOpen(ticket, false);
             }
@@ -263,19 +265,19 @@ private:
             double teStart = pTEStart.GetDouble();
 
             // [v2.5] Prioritize real-time terminal price for ENT and TP
-            double entryPrice = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentPriceOpen(sig.GetTicket(), true) : 0;
+            double entryPrice = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentPriceOpen(ticket, true) : 0;
             if(entryPrice <= 0) entryPrice = sig.GetPriceOpen();
 
-            double tpPrice = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentTP(sig.GetTicket()) : 0;
+            double tpPrice = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentTP(ticket) : 0;
             if(tpPrice <= 0) tpPrice = sig.GetPriceTP();
             if(tpPrice <= 0 && sig.GetTP() > 0 && entryPrice > 0) {
                 tpPrice = entryPrice + (sig.GetTP() * point * -dirSign);
             }
 
-            double diff = (entryPrice - teStart) * dirSign; // Positive means price improvement
+            double diff = (entryPrice - teStart) * -dirSign; // Positive means price improvement (Corrected calculation)
             string diffStr = StringFormat("%+.2f", diff / point);
 
-            txtL2 = StringFormat(" ┗━ TE_STR: %s -> ENT: %s (%s)  TP: %s",
+            txtL2 = StringFormat(" ┗━ STR: %s -> ENT: %s (%s)  TP: %s",
                                  DoubleToString(teStart, digits),
                                  DoubleToString(entryPrice, digits),
                                  diffStr,

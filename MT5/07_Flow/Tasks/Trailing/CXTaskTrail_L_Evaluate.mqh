@@ -59,6 +59,23 @@ public:
             ((sig.GetDir() == CX_DIR_BUY) ? (extreme - currentPrice) : (currentPrice - extreme));
 
         if(distance >= step * point) {
+            // [v2.6 Guard] For TE, ensure the rebound trigger price is still better than original baseline
+            if(m_mode == TRAIL_MODE_ENTRY) {
+                // Determine original baseline (from Signal or Global context)
+                double baseline = (sig.GetPriceOpen() > 0) ? sig.GetPriceOpen() : sig.GetPriceSignal();
+                ICXContext* globalCtx = CX_GET_OBJ(ctx, "global_ctx", ICXContext);
+                if(IS_VALID(globalCtx)) {
+                    ICXParam* pBase = globalCtx.GetParam("TE_BasePrice_" + sig.GetSid());
+                    if(IS_VALID(pBase)) baseline = pBase.GetDouble();
+                }
+
+                // If rebound price (currentPrice) is worse than or equal to baseline, force entry AT baseline to prevent loss of advantage
+                bool isBetter = (sig.GetDir() == CX_DIR_BUY) ? (currentPrice < baseline) : (currentPrice > baseline);
+                if(!isBetter) {
+                    XP_LOG_WARN(xp, CXAuditFormatter::Build(Name(), xp, StringFormat("REBOUND GUARD: Price %s reached baseline %s. Forcing entry.", DoubleToString(currentPrice, m_symMgr.GetDigits(sig.GetSymbol())), DoubleToString(baseline, m_symMgr.GetDigits(sig.GetSymbol())))));
+                }
+            }
+
             XP_LOG_OK(xp, CXAuditFormatter::Build(Name(), xp, StringFormat("TRIGGERED! Dist: %.1f pt >= Step: %d pt", distance / point, step)));
             xp.SetInt((m_mode == TRAIL_MODE_ENTRY) ? 10 : 20);
         }
