@@ -29,6 +29,7 @@ public:
         m_ctx = globalCtx.CreateChildContext();
         if(IS_VALID(m_ctx)) {
             m_ctx.Register("signal", m_signal);
+            m_ctx.Register("global_ctx", globalCtx); // [v2.4] Allow tasks to access global context
             
             // [v2.2] Session-specific Logger Injection
             ICXServiceFactory* factory = CX_GET_OBJ(globalCtx, "factory", ICXServiceFactory);

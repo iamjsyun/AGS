@@ -78,11 +78,24 @@ public:
             IRepository* repo = CX_GET_OBJ(ctx, "repo", IRepository);
             if(IS_VALID(repo)) {
                 sig.SetStatus((m_mode == TRAIL_MODE_ENTRY) ? XE_ENTRY_TRAILING : XE_STOP_TRAILING);
-                sig.SetStatusMsg((m_mode == TRAIL_MODE_ENTRY) ? "Trailing Entry Activated (ESTART reached)" : "Trailing Stop Activated (SSTART reached)");
+                sig.SetStatusMsg((m_mode == TRAIL_MODE_ENTRY) ? 
+                                 StringFormat("Trailing Entry Activated (Price: %s)", DoubleToString(currentPrice, m_symMgr.GetDigits(sig.GetSymbol()))) : 
+                                 "Trailing Stop Activated (SSTART reached)");
                 repo.UpdateStatus(sig);
             }
 
-            XP_LOG_OK(xp, CXAuditFormatter::Build(Name(), xp, "Trailing ACTIVATED!"));
+            // [v2.4] Store TE Start Price for UI comparison in Global Context
+            if(m_mode == TRAIL_MODE_ENTRY) {
+                ICXContext* globalCtx = CX_GET_OBJ(ctx, "global_ctx", ICXContext);
+                if(IS_VALID(globalCtx)) {
+                    string startPriceKey = "TE_StartPrice_" + sig.GetSid();
+                    ICXParam* pStart = new CXParam();
+                    pStart.SetDouble(currentPrice);
+                    globalCtx.Set(startPriceKey, pStart);
+                }
+            }
+
+            XP_LOG_OK(xp, CXAuditFormatter::Build(Name(), xp, StringFormat("Trailing ACTIVATED! Current Price: %s", DoubleToString(currentPrice, m_symMgr.GetDigits(sig.GetSymbol())))));
             if(m_mode == TRAIL_MODE_EXIT) return SESSION_TRAILING_STOP;
         }
         return TASK_CONTINUE;

@@ -46,7 +46,22 @@ public:
             sig.SetType(ORDER_MARKET);
             if(m_orderMgr.ExecuteEntry(xp)) {
                 sig.SetTag("ENTRY_TE_REBOUND");
-                XP_LOG_OK(xp, CXAuditFormatter::Build(Name(), xp, "TE Market Fallback Success."));
+                
+                // [v2.4] Store actual entry price and mark as TE filled in Global Context
+                ICXContext* globalCtx = CX_GET_OBJ(ctx, "global_ctx", ICXContext);
+                if(IS_VALID(globalCtx)) {
+                    string entryPriceKey = "TE_EntryPrice_" + sig.GetSid();
+                    ICXParam* pEntry = new CXParam();
+                    pEntry.SetDouble(sig.GetPriceOpen());
+                    globalCtx.Set(entryPriceKey, pEntry);
+
+                    string filledKey = "TE_Filled_" + sig.GetSid();
+                    ICXParam* pFilled = new CXParam();
+                    pFilled.SetInt(1);
+                    globalCtx.Set(filledKey, pFilled);
+                }
+
+                XP_LOG_OK(xp, CXAuditFormatter::Build(Name(), xp, StringFormat("TE Market Fallback Success. Entry: %s", DoubleToString(sig.GetPriceOpen(), (int)SymbolInfoInteger(sig.GetSymbol(), SYMBOL_DIGITS)))));
                 return 10;
             }
         } else if(m_mode == TRAIL_MODE_EXIT && code == 20) {
