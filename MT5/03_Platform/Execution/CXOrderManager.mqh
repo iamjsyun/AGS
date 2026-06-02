@@ -58,7 +58,7 @@ public:
                 tesp = refPrice + (sig.GetTEStart() * point * (sig.GetDir()==CX_DIR_BUY?-1:1));
                 telp = refPrice + (sig.GetTELimit() * point * (sig.GetDir()==CX_DIR_BUY?-1:1));
             } else {
-                string extKey = "LastEntryExtremity_" + sig.GetSid();
+                string extKey = "TE_Extreme_" + sig.GetSid();
                 ICXParam* pExt = m_ctx.GetParam(extKey);
                 if(CXLogDispatcher::IsOk(pExt) && pExt.GetDouble() > 0) refPrice = pExt.GetDouble();
                 tesp = refPrice - (sig.GetTEStep() * point * (sig.GetDir()==CX_DIR_BUY?-1:1));

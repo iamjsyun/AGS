@@ -203,11 +203,15 @@ private:
             
             // [v1.2 Fix] Jitter prevention: Reference extremity instead of real-time market price
             double refPriceTS = currentPrice;
-            string extKey = "LastStopExtremity_" + sig.GetSid();
-            ICXParam* pExt = m_ctx.GetParam(extKey);
-            if(IS_VALID(pExt) && pExt.GetDouble() > 0) refPriceTS = pExt.GetDouble();
+            string extKeyTS = "TS_Extreme_" + sig.GetSid();
+            ICXParam* pExtTS = m_ctx.GetParam(extKeyTS);
+            if(IS_VALID(pExtTS) && pExtTS.GetDouble() > 0) refPriceTS = pExtTS.GetDouble();
             
-            p1_lbl = "SSTART"; p1 = refPriceTS + (sig.GetTSStart() * point * -dirSign); // TS follows behind the price
+            if(isTrailing) {
+                p1_lbl = "SSTART"; p1 = refPriceTS + (sig.GetTSStep() * point * dirSign); // Liquidation trigger is a retraction (behind the price)
+            } else {
+                p1_lbl = "SSTART"; p1 = refPriceTS + (sig.GetTSStart() * point * -dirSign); // Initial SSTART follows behind the price
+            }
             p2_lbl = "SSTEP";  p2 = sig.GetTSStep() * point;
         } else {
             // Pending order mode: Display entry price and Trailing Entry info
@@ -226,11 +230,15 @@ private:
             
             // [v1.2 Fix] Jitter prevention: Reference extremity instead of real-time market price
             double refPriceTE = currentPrice;
-            string extKey = "LastEntryExtremity_" + sig.GetSid();
+            string extKey = "TE_Extreme_" + sig.GetSid();
             ICXParam* pExt = m_ctx.GetParam(extKey);
             if(IS_VALID(pExt) && pExt.GetDouble() > 0) refPriceTE = pExt.GetDouble();
             
-            p1_lbl = "ESTART"; p1 = refPriceTE + (sig.GetTEStart() * point * dirSign);  // TE follows in front of the price
+            if(isTrailing) {
+                p1_lbl = "ESTART"; p1 = refPriceTE + (sig.GetTEStep() * point * -dirSign); // Trigger price is a rebound (opposite to direction)
+            } else {
+                p1_lbl = "ESTART"; p1 = refPriceTE + (sig.GetTEStart() * point * dirSign);  // Activation threshold is in front of the price
+            }
             p2_lbl = "ESTEP";  p2 = sig.GetTEStep() * point;
         }
 
