@@ -46,17 +46,26 @@ public:
         int threshold = (m_mode == TRAIL_MODE_ENTRY) ? (int)sig.GetTEStart() : (int)sig.GetTSStart();
         if(threshold <= 0) return TASK_CONTINUE;
 
-        double currentPrice = m_priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir());
+        // [v2.3 Fix] Use GetMarketPrice for Entry and GetLiquidationPrice for Exit
+        double currentPrice = (m_mode == TRAIL_MODE_ENTRY) ? 
+                               m_priceMgr.GetMarketPrice(sig.GetSymbol(), sig.GetDir()) : 
+                               m_priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir());
+        
         double point = m_symMgr.GetPoint(sig.GetSymbol());
         double dir_sign = (sig.GetDir() == CX_DIR_BUY) ? 1.0 : -1.0;
 
         bool is_activated = false;
         if(m_mode == TRAIL_MODE_ENTRY) {
-            double entryPrice = sig.GetPriceOpen();
-            double triggerPrice = entryPrice - (threshold * point * dir_sign);
+            // [v2.3 Fix] Fallback to price_signal if price_open is 0 to prevent premature activation (especially for SELL)
+            double refPrice = (sig.GetPriceOpen() > 0) ? sig.GetPriceOpen() : sig.GetPriceSignal();
+            if(refPrice <= 0) return TASK_CONTINUE;
+
+            double triggerPrice = refPrice - (threshold * point * dir_sign);
             is_activated = (sig.GetDir() == CX_DIR_BUY) ? (currentPrice <= triggerPrice) : (currentPrice >= triggerPrice);
         } else {
             double openPrice = sig.GetPriceOpen();
+            if(openPrice <= 0) return TASK_CONTINUE;
+
             double profit = (currentPrice - openPrice) * dir_sign;
             is_activated = (profit >= threshold * point);
         }

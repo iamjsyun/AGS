@@ -102,6 +102,64 @@ public:
             }
         }
 
+        //--------------------------------------------------------------
+        // Scenario 2: Sell Trailing Entry with 0 PriceOpen (v2.3 Fix Verification)
+        //--------------------------------------------------------------
+        {
+            CXContext ctx;
+            MockPriceManager priceMgr(GetPointer(ctx));
+            CXVirtualPricer pricer("GOLD#", 0.01);
+            MockSymbolManager symMgr;
+
+            ctx.Register("price_mgr", GetPointer(priceMgr));
+            ctx.Register("sym_mgr", GetPointer(symMgr));
+
+            priceMgr.SetPricer(GetPointer(pricer));
+            symMgr.SetPoint("GOLD#", 0.01);
+
+            CXTaskTrail_V_Activate tActivate(TRAIL_MODE_ENTRY);
+            tActivate.Bind(GetPointer(ctx));
+
+            CXParam xp;
+            CXSignal sig;
+            sig.SetSid("TEST-TE-02");
+            sig.SetSymbol("GOLD#");
+            sig.SetDir(CX_DIR_SELL);
+            sig.SetTEStart(300); // 3.00
+            sig.SetTEStep(100);  // 1.00
+            sig.SetPriceSignal(2600.00); // Target
+            sig.SetPriceOpen(0.0);       // 0 Open (Reported Bug State)
+            xp.SetSignal(GetPointer(sig));
+
+            // Initial Market Price (Below target + start)
+            pricer.SetPrice(2601.00); // Target (2600) + 3.00 = 2603.00 threshold
+            
+            // Should NOT activate yet
+            tActivate.Execute(GetPointer(xp), GetPointer(ctx));
+            
+            string activeKey = "TE_Active_" + sig.GetSid();
+            ICXParam* pActive = ctx.GetParam(activeKey);
+            
+            if(IS_INVALID(pActive) || pActive.GetInt() == 0) {
+                Print("  [PASS] Scenario 2: SELL TE with 0 PriceOpen correctly uses PriceSignal and does not activate prematurely.");
+            } else {
+                Print("  [FAIL] Scenario 2: SELL TE activated prematurely with 0 PriceOpen!");
+                allPassed = false;
+            }
+
+            // Move price above threshold
+            pricer.SetPrice(2603.50); // > 2603.00
+            tActivate.Execute(GetPointer(xp), GetPointer(ctx));
+            pActive = ctx.GetParam(activeKey);
+            
+            if(IS_VALID(pActive) && pActive.GetInt() == 1) {
+                Print("  [PASS] Scenario 2: SELL TE activated correctly when threshold reached.");
+            } else {
+                Print("  [FAIL] Scenario 2: SELL TE failed to activate at threshold.");
+                allPassed = false;
+            }
+        }
+
         return allPassed;
     }
 };

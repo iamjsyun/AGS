@@ -47,7 +47,11 @@ public:
         int step = (m_mode == TRAIL_MODE_ENTRY) ? (int)sig.GetTEStep() : (int)sig.GetTSStep();
         if(step <= 0) return TASK_CONTINUE;
 
-        double currentPrice = m_priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir());
+        // [v2.3 Fix] Use GetMarketPrice for Entry and GetLiquidationPrice for Exit
+        double currentPrice = (m_mode == TRAIL_MODE_ENTRY) ? 
+                               m_priceMgr.GetMarketPrice(sig.GetSymbol(), sig.GetDir()) : 
+                               m_priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir());
+        
         double point = m_symMgr.GetPoint(sig.GetSymbol());
 
         double distance = (m_mode == TRAIL_MODE_ENTRY) ? 

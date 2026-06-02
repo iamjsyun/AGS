@@ -41,7 +41,10 @@ public:
         ICXParam* pActive = ctx.GetParam(activeKey);
         if(IS_INVALID(pActive) || pActive.GetInt() != 1) return TASK_CONTINUE;
 
-        double currentPrice = m_priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir());
+        // [v2.3 Fix] Use GetMarketPrice for Entry and GetLiquidationPrice for Exit
+        double currentPrice = (m_mode == TRAIL_MODE_ENTRY) ? 
+                               m_priceMgr.GetMarketPrice(sig.GetSymbol(), sig.GetDir()) : 
+                               m_priceMgr.GetLiquidationPrice(sig.GetSymbol(), sig.GetDir());
 
         string extKey = (m_mode == TRAIL_MODE_ENTRY) ? "TE_Extreme_" : "TS_Extreme_";
         extKey += sig.GetSid();
