@@ -16,8 +16,12 @@ public:
       // [v16.19 Race-Condition Safeguard]
       // Use MAX function to ensure ATSE's status report does not overwrite App's intention (Prevent regression)
       string sql = StringFormat(
-                      "UPDATE signals SET xe_status=%d, xe_status_msg='%s', ticket=%I64u, xa_entry=MAX(xa_entry, %d), xa_exit=MAX(xa_exit, %d), tag='%s', updated=datetime('now','localtime') WHERE sid='%s'",
-                      signal.GetStatus(), sMsg, signal.GetTicket(), signal.GetXAEntry(), signal.GetXAExit(), tagVal, signal.GetSid()
+                      "UPDATE signals SET xe_status=%d, xe_status_msg='%s', ticket=%I64u, xa_entry=MAX(xa_entry, %d), xa_exit=MAX(xa_exit, %d), tag='%s', "
+                      "price=%s, price_open=%s, price_tp=%s, price_sl=%s, "
+                      "updated=datetime('now','localtime') WHERE sid='%s'",
+                      signal.GetStatus(), sMsg, signal.GetTicket(), signal.GetXAEntry(), signal.GetXAExit(), tagVal,
+                      CXSqlMapper::ToSql(signal.GetPrice()), CXSqlMapper::ToSql(signal.GetPriceOpen()), CXSqlMapper::ToSql(signal.GetPriceTP()), CXSqlMapper::ToSql(signal.GetPriceSL()),
+                      signal.GetSid()
                    );
       return m_db.Execute(sql);
    }
@@ -36,8 +40,12 @@ public:
       StringReplace(tagVal, "'", "''");
 
       string sql = StringFormat(
-                      "UPDATE signals SET xe_status=%d, xe_status_msg='%s', xa_entry=%d, xa_exit=%d, tag='%s', updated=datetime('now','localtime') WHERE sid='%s'",
-                      signal.GetStatus(), sMsg, signal.GetXAEntry(), signal.GetXAExit(), tagVal, signal.GetSid()
+                      "UPDATE signals SET xe_status=%d, xe_status_msg='%s', xa_entry=%d, xa_exit=%d, tag='%s', "
+                      "price=%s, price_open=%s, price_tp=%s, price_sl=%s, "
+                      "updated=datetime('now','localtime') WHERE sid='%s'",
+                      signal.GetStatus(), sMsg, signal.GetXAEntry(), signal.GetXAExit(), tagVal,
+                      CXSqlMapper::ToSql(signal.GetPrice()), CXSqlMapper::ToSql(signal.GetPriceOpen()), CXSqlMapper::ToSql(signal.GetPriceTP()), CXSqlMapper::ToSql(signal.GetPriceSL()),
+                      signal.GetSid()
                    );
       return m_db.Execute(sql);
    }
