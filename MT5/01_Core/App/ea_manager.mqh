@@ -1,16 +1,11 @@
 #ifndef EA_MANAGER_MQH
 #define EA_MANAGER_MQH
 
-#include "..\..\99_TestFramework\UnitTests\Infrastructure\Test_Pipeline_DB_Conn.mqh"
-#include "..\..\99_TestFramework\UnitTests\Entry_Stage\Test_Pipeline_Signal_Det.mqh"
-
 #define EA_CMD_FILE "DB\\ea_command.txt"
 
 void TestDispatcher(string task, string fn) {
-    // Mapping Task/Fn to MQL5 test functions
-    if(task == "CXDatabase" && fn == "Open") Run_Pipeline_DB_Conn_Test();
-    else if(task == "CXSignalWatcher" && fn == "ValidateSymbol") Run_Pipeline_Signal_Det_Test();
-    else Print("[EA-MGR] Unknown test target: ", task, "::", fn);
+    // Mapping Task/Fn to MQL5 test functions (Obsolete tests removed)
+    Print("[EA-MGR] Test target not found or obsolete: ", task, "::", fn);
 }
 
 void CheckEaCommand() {

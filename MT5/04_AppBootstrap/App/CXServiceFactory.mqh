@@ -5,7 +5,6 @@
 #include "..\..\02_Domain\Models\CXContext.mqh"
 #include "..\..\01_Core\Logger\CXLogDispatcher.mqh"
 #include "..\..\01_Core\Logger\CXFileLogger.mqh"
-#include "..\..\01_Core\Logger\CXFileLoggerSID.mqh"
 #include "..\..\01_Core\Logger\CXTabLogger.mqh"
 #include "..\..\01_Core\Logger\CXRemoteLogger.mqh"
 #include "..\..\06_Orchestration\Sequence\CXFluentSequence.mqh"
@@ -50,15 +49,9 @@ public:
         if(IS_VALID(config)) {
             if(config.IsFileLogEnabled(category)) {
                 bool initOnStart = true; // [v11.5 Mandate] Always truncate on startup
-                if(category == "Session") {
-                    CXFileLoggerSID* fileLog = new CXFileLoggerSID();
-                    if(IS_VALID(fileLog) && fileLog.Init(sid, initOnStart)) logger.SetFileLogger(fileLog);
-                    else SAFE_DELETE(fileLog);
-                } else {
-                    CXFileLogger* fileLog = new CXFileLogger();
-                    if(IS_VALID(fileLog) && fileLog.Init(sid, initOnStart)) logger.SetFileLogger(fileLog);
-                    else SAFE_DELETE(fileLog);
-                }
+                CXFileLogger* fileLog = new CXFileLogger();
+                if(IS_VALID(fileLog) && fileLog.Init(sid, initOnStart)) logger.SetFileLogger(fileLog);
+                else SAFE_DELETE(fileLog);
             }
             logger.SetTabLogger(new CXTabLogger());
             if(config.IsRemoteLogEnabled(category)) {

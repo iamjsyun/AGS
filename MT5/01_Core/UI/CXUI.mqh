@@ -24,7 +24,7 @@ struct MqlUIElement {
 class CXUI : public CObject {
 private:
     ICXContext*       m_ctx;              // Service context dependency
-    MqlUIElement      m_elements[10];     // Manages up to 10 session slots
+    MqlUIElement      m_elements[12];     // Manages up to 12 session slots
     
     // UI style configuration
     color             m_color_text;
@@ -62,7 +62,7 @@ public:
      * @brief Initial creation and initialization of chart label resources
      */
     bool Initialize() {
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 12; i++) {
             string nameL1 = StringFormat("CXUI_%d_L1", i);
             string nameL2 = StringFormat("CXUI_%d_L2", i);
 
@@ -91,7 +91,7 @@ public:
      * @brief Complete destruction of chart resources (Leak prevention)
      */
     void Deinitialize() {
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 12; i++) {
             m_elements[i].Line1.Delete();
             m_elements[i].Line2.Delete();
         }
@@ -138,12 +138,18 @@ public:
             }
         }
 
-        int renderCount = MathMin(activeList.Total(), 10);
+        int renderCount = MathMin(activeList.Total(), 11);
 
-        for(int i = 0; i < 10; i++) {
-            if(i < renderCount) {
-                CXTerminalAsset* asset = CX_CAST(CXTerminalAsset, assetList.At(i));
-                ICXSignal* sig = CX_CAST(ICXSignal, activeList.At(i));
+        // Render Version Header on Slot 0
+        m_elements[0].Line1.Description("AGS Ver:13.6");
+        m_elements[0].Line1.Color(clrWhite);
+        m_elements[0].Line2.Description(" ");
+
+        for(int i = 1; i < 12; i++) {
+            int sigIdx = i - 1;
+            if(sigIdx < renderCount) {
+                CXTerminalAsset* asset = CX_CAST(CXTerminalAsset, assetList.At(sigIdx));
+                ICXSignal* sig = CX_CAST(ICXSignal, activeList.At(sigIdx));
                 if(IS_VALID(sig) && IS_VALID(asset)) {
                     UpdateSlot(i, sig, asset.ticket, priceMgr, assetMgr);
                 } else {
@@ -190,39 +196,46 @@ private:
                                     (int)sig.GetTEStart(),
                                     (int)sig.GetTEStep(),
                                     (int)sig.GetTELimit(),
-                                    GetStateName((ENUM_XE_STATUS)sig.GetStatus()) + (isTrailing ? "*TR" : ""));
+                                    GetStateName((ENUM_XE_STATUS)sig.GetStatus()));
 
         string txtL2 = "";
         if(isPosition) {
-            // [v2.7] Position Dashboard: ENT: {entry} SIG: {discovery} ADV: {diff} TP: {tp}
+            // [v2.8] Position Dashboard: ENT: {entry} (+/- profit pt) SIG: {discovery} ADV: {diff} TP: {tp} ({target} pt)
             double entPrice = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentPriceOpen(ticket, true) : sig.GetPriceOpen();
             double sigPrice = sig.GetPrice(); // Discovery Market Price
             double tpPrice  = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentTP(ticket) : sig.GetPriceTP();
             
-            ICXParam* pTEStart = m_ctx.GetParam("TE_StartPrice_" + sig.GetSid());
-            double teStart = IS_VALID(pTEStart) ? pTEStart.GetDouble() : sigPrice;
+            // Get current price (liquidation price) for real-time profit points
+            double currentPrice = IS_VALID(priceMgr) ? priceMgr.GetLiquidationPrice(symbol, sig.GetDir()) : 0;
+            if(currentPrice <= 0) {
+                currentPrice = (sig.GetDir() == CX_DIR_BUY) ? SymbolInfoDouble(symbol, SYMBOL_BID) : SymbolInfoDouble(symbol, SYMBOL_ASK);
+            }
             
-            // Advantage calculation: Discovery Mkt vs Actual Entry (Positive means improved)
+            double profitPts = (entPrice > 0 && currentPrice > 0) ? (currentPrice - entPrice) * calcDir / point : 0;
+            double tpPts = (entPrice > 0 && tpPrice > 0) ? (tpPrice - entPrice) * calcDir / point : 0;
             double advPts = (sigPrice > 0 && entPrice > 0) ? (sigPrice - entPrice) * calcDir : 0;
             
-            txtL2 = StringFormat(" ┗━ ENT:%s SIG:%s ADV:%+.1f TP:%s",
+            txtL2 = StringFormat(" ┗━ ENT:%s (%+d pt) SIG:%s ADV:%+.1f TP:%s (%d pt)",
                                  DoubleToString(entPrice, digits),
+                                 (int)MathRound(profitPts),
                                  DoubleToString(sigPrice, digits),
                                  advPts / point,
-                                 DoubleToString(tpPrice, digits));
+                                 DoubleToString(tpPrice, digits),
+                                 (int)MathRound(tpPts));
         } else {
-            // [v2.7] Pending Order Dashboard: LIMIT: {entry} ESTART: {STR}, {TRACK}
-            double limitPrice = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentPriceOpen(ticket, false) : sig.GetPriceOpen();
+            // [v2.8] Pending Order Dashboard: LIMIT: {execPrice_calc} ESTART: {triggerPrice_calc} {extreme}
+            double refPrice = sig.GetPrice();
+            if(refPrice <= 0) refPrice = (sig.GetPriceOpen() > 0) ? sig.GetPriceOpen() : sig.GetPriceSignal();
             
-            ICXParam* pTEStart = m_ctx.GetParam("TE_StartPrice_" + sig.GetSid());
-            double teStart = IS_VALID(pTEStart) ? pTEStart.GetDouble() : 0;
+            double eStartVal = refPrice + (sig.GetTEStart() * point * dirSign);
+            double limitVal = refPrice + (sig.GetTELimit() * point * dirSign);
             
             ICXParam* pExt = m_ctx.GetParam("TE_Extreme_" + sig.GetSid());
             double extreme = IS_VALID(pExt) ? pExt.GetDouble() : 0;
 
-            txtL2 = StringFormat(" ┗━ LIMIT:%s ESTART:%s %s" ,
-                                 DoubleToString(limitPrice, digits),
-                                 (teStart > 0) ? DoubleToString(teStart, digits) : "---",
+            txtL2 = StringFormat(" ┗━ LIMIT:%s ESTART:%s %s",
+                                 DoubleToString(limitVal, digits),
+                                 (eStartVal > 0) ? DoubleToString(eStartVal, digits) : "---",
                                  (extreme > 0) ? DoubleToString(extreme, digits) : "---");
         }
 
@@ -254,8 +267,10 @@ private:
             case XE_READY:          return "READY";
             case XE_PENDING_REQ:    return "PEND_REQ";
             case XE_IN_TRANSIT:     return "TRANSIT";
-            case XE_PENDING_PLACED: return "PENDING";
-            case XE_EXECUTED:       return "ACTIVE";
+            case XE_PENDING_PLACED: return "Order";
+            case XE_ENTRY_TRAILING: return "Order-TRL";
+            case XE_EXECUTED:       return "Position";
+            case XE_STOP_TRAILING:  return "Position-TRL";
             case XE_CLOSED_SIGNAL:  return "CLOSED";
             case XE_CLOSED_SL:      return "CLOSED_SL";
             case XE_CLOSED_TP:      return "CLOSED_TP";
