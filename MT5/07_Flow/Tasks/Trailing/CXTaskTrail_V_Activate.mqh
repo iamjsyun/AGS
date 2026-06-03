@@ -56,8 +56,9 @@ public:
 
         bool is_activated = false;
         if(m_mode == TRAIL_MODE_ENTRY) {
-            // [v2.3 Fix] Fallback to price_signal if price_open is 0 to prevent premature activation (especially for SELL)
-            double refPrice = (sig.GetPriceOpen() > 0) ? sig.GetPriceOpen() : sig.GetPriceSignal();
+            // [v2.7 Redesign] Use Discovery Market Price (Price field) as baseline for TE trigger
+            double refPrice = sig.GetPrice(); 
+            if(refPrice <= 0) refPrice = (sig.GetPriceOpen() > 0) ? sig.GetPriceOpen() : sig.GetPriceSignal();
             if(refPrice <= 0) return TASK_CONTINUE;
 
             double triggerPrice = refPrice - (threshold * point * dir_sign);
@@ -91,14 +92,14 @@ public:
                     string startPriceKey = "TE_StartPrice_" + sig.GetSid();
                     ICXParam* pStart = new CXParam();
                     pStart.SetDouble(currentPrice);
-                    globalCtx.Set(startPriceKey, pStart);
+                    globalCtx.Set(startPriceKey, pStart, true); // Set as managed to ensure it stays in global context
 
-                    // [v2.6] Store Original Base Price for Advantage Calculation
+                    // [v2.6] Store Original Base Price for Rebound Guard logic
                     string basePriceKey = "TE_BasePrice_" + sig.GetSid();
                     double refPrice = (sig.GetPriceOpen() > 0) ? sig.GetPriceOpen() : sig.GetPriceSignal();
                     ICXParam* pBase = new CXParam();
                     pBase.SetDouble(refPrice);
-                    globalCtx.Set(basePriceKey, pBase);
+                    globalCtx.Set(basePriceKey, pBase, true);
                 }
             }
 

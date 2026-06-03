@@ -168,21 +168,12 @@ private:
         int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
         double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
         double dirSign = (sig.GetDir() == CX_DIR_BUY) ? -1.0 : 1.0;
+        double calcDir = (sig.GetDir() == CX_DIR_BUY) ? 1.0 : -1.0; // BUY: Advantage if price goes DOWN (for entry) or UP (for profit)
         
         ulong ticket = (terminalTicket > 0) ? terminalTicket : sig.GetTicket();
 
-        // Acquire real-time base price (SSOC)
-        double currentPrice = 0;
-        if(IS_VALID(priceMgr)) {
-            currentPrice = priceMgr.GetLiquidationPrice(symbol, (ENUM_CX_DIRECTION)sig.GetDir());
-        } else {
-            currentPrice = SymbolInfoDouble(symbol, (sig.GetDir() == CX_DIR_BUY) ? SYMBOL_ASK : SYMBOL_BID);
-        }
-
-        // Status determination (Position vs Pending Order)
+        // Status determination
         bool isPosition = (sig.GetStatus() >= XE_EXECUTED && sig.GetStatus() < XE_CLOSED_SIGNAL);
-        string p0_lbl, p1_lbl, p2_lbl;
-        double p0, p1, p2;
 
         ICXTradingSession* session = IS_VALID(assetMgr) ? assetMgr.FindSessionBySid(sig.GetSid()) : NULL;
         bool isTrailing = false;
@@ -193,128 +184,55 @@ private:
             }
         }
 
-        if(isPosition) {
-            // Position mode: Display TP and Trailing Stop info
-            p0_lbl = "TP";
-            p0 = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentTP(ticket) : 0;
-            if(p0 <= 0) p0 = sig.GetPriceTP();
-            // [v2.5] Fallback: Calculate TP from points if missing
-            if(p0 <= 0 && sig.GetTP() > 0) {
-                double openP = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentPriceOpen(ticket, true) : sig.GetPriceOpen();
-                if(openP > 0) p0 = openP + (sig.GetTP() * point * -dirSign);
-            }
-            
-            // [v1.2 Fix] Jitter prevention: Reference extremity instead of real-time market price
-            double refPriceTS = currentPrice;
-            string extKeyTS = "TS_Extreme_" + sig.GetSid();
-            ICXParam* pExtTS = m_ctx.GetParam(extKeyTS);
-            if(IS_VALID(pExtTS) && pExtTS.GetDouble() > 0) refPriceTS = pExtTS.GetDouble();
-            
-            if(isTrailing) {
-                p1_lbl = "SSTART"; p1 = refPriceTS + (sig.GetTSStep() * point * dirSign); // Liquidation trigger is a retraction (behind the price)
-            } else {
-                p1_lbl = "SSTART"; p1 = refPriceTS + (sig.GetTSStart() * point * -dirSign); // Initial SSTART follows behind the price
-            }
-            p2_lbl = "SSTEP";  p2 = sig.GetTSStep() * point;
-        } else {
-            // Pending order mode: Display entry price and Trailing Entry info
-            p0_lbl = "LIMIT";  
-            p0 = 0;
-            if(ticket > 0 && IS_VALID(assetMgr)) {
-                p0 = assetMgr.GetCurrentPriceOpen(ticket, false);
-            }
-            if(p0 <= 0) {
-                p0 = sig.GetPriceOpen();
-            }
-            if(p0 <= 0) {
-                p0 = sig.GetPriceSignal();
-            }
-            
-            // [v1.2 Fix] Jitter prevention: Reference extremity instead of real-time market price
-            double refPriceTE = currentPrice;
-            string extKey = "TE_Extreme_" + sig.GetSid();
-            ICXParam* pExt = m_ctx.GetParam(extKey);
-            if(IS_VALID(pExt) && pExt.GetDouble() > 0) refPriceTE = pExt.GetDouble();
-            
-            if(isTrailing) {
-                p1_lbl = "ESTART"; p1 = refPriceTE + (sig.GetTEStep() * point * -dirSign); // Trigger price is a rebound (opposite to direction)
-            } else {
-                p1_lbl = "ESTART"; p1 = refPriceTE + (sig.GetTEStart() * point * dirSign);  // Activation threshold is in front of the price
-            }
-            p2_lbl = "ESTEP";  p2 = sig.GetTEStep() * point;
-        }
-
-        // Line 1: {SID} {te_start} | {te_step} | {te_limit} [{state}]
-        string stateStr = GetStateName((ENUM_XE_STATUS)sig.GetStatus());
-        if(isTrailing) {
-            stateStr = stateStr + "*TR";
-        }
         string txtL1 = StringFormat("%s%s  %d | %03d | %d  [%s]",
                                     isTrailing ? "▶ " : "",
                                     sig.GetSid(),
                                     (int)sig.GetTEStart(),
                                     (int)sig.GetTEStep(),
                                     (int)sig.GetTELimit(),
-                                    stateStr);
+                                    GetStateName((ENUM_XE_STATUS)sig.GetStatus()) + (isTrailing ? "*TR" : ""));
 
-        // Line 2: [v2.4] Dynamic display for TE advantage
         string txtL2 = "";
-        ICXParam* pTEStart = m_ctx.GetParam("TE_StartPrice_" + sig.GetSid());
-        
-        if(isPosition && IS_VALID(pTEStart)) {
-            double teStart = pTEStart.GetDouble();
-
-            // [v2.5] Prioritize real-time terminal price for ENT and TP
-            double entryPrice = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentPriceOpen(ticket, true) : 0;
-            if(entryPrice <= 0) entryPrice = sig.GetPriceOpen();
-
-            double tpPrice = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentTP(ticket) : 0;
-            if(tpPrice <= 0) tpPrice = sig.GetPriceTP();
-            if(tpPrice <= 0 && sig.GetTP() > 0 && entryPrice > 0) {
-                tpPrice = entryPrice + (sig.GetTP() * point * -dirSign);
-            }
-
-            double diff = (entryPrice - teStart) * -dirSign; // Positive means price improvement (Corrected calculation)
-            string diffStr = StringFormat("%+.2f", diff / point);
-
-            txtL2 = StringFormat(" ┗━ STR: %s -> ENT: %s (%s)  TP: %s",
-                                 DoubleToString(teStart, digits),
-                                 DoubleToString(entryPrice, digits),
-                                 diffStr,
+        if(isPosition) {
+            // [v2.7] Position Dashboard: ENT: {entry} SIG: {discovery} ADV: {diff} TP: {tp}
+            double entPrice = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentPriceOpen(ticket, true) : sig.GetPriceOpen();
+            double sigPrice = sig.GetPrice(); // Discovery Market Price
+            double tpPrice  = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentTP(ticket) : sig.GetPriceTP();
+            
+            ICXParam* pTEStart = m_ctx.GetParam("TE_StartPrice_" + sig.GetSid());
+            double teStart = IS_VALID(pTEStart) ? pTEStart.GetDouble() : sigPrice;
+            
+            // Advantage calculation: Discovery Mkt vs Actual Entry (Positive means improved)
+            double advPts = (sigPrice > 0 && entPrice > 0) ? (sigPrice - entPrice) * calcDir : 0;
+            
+            txtL2 = StringFormat(" ┗━ ENT:%s SIG:%s ADV:%+.1f TP:%s",
+                                 DoubleToString(entPrice, digits),
+                                 DoubleToString(sigPrice, digits),
+                                 advPts / point,
                                  DoubleToString(tpPrice, digits));
         } else {
-            txtL2 = StringFormat(" ┗━ %s: %s    %s: %s   %s: %s",
-                                 p0_lbl, DoubleToString(p0, digits),
-                                 p1_lbl, DoubleToString(p1, digits),
-                                 p2_lbl, DoubleToString(p2, digits));
+            // [v2.7] Pending Order Dashboard: LIMIT: {entry} ESTART: {STR}, {TRACK}
+            double limitPrice = (IS_VALID(assetMgr)) ? assetMgr.GetCurrentPriceOpen(ticket, false) : sig.GetPriceOpen();
+            
+            ICXParam* pTEStart = m_ctx.GetParam("TE_StartPrice_" + sig.GetSid());
+            double teStart = IS_VALID(pTEStart) ? pTEStart.GetDouble() : 0;
+            
+            ICXParam* pExt = m_ctx.GetParam("TE_Extreme_" + sig.GetSid());
+            double extreme = IS_VALID(pExt) ? pExt.GetDouble() : 0;
+
+            txtL2 = StringFormat(" ┗━ LIMIT:%s ESTART:%s %s" ,
+                                 DoubleToString(limitPrice, digits),
+                                 (teStart > 0) ? DoubleToString(teStart, digits) : "---",
+                                 (extreme > 0) ? DoubleToString(extreme, digits) : "---");
         }
 
-        // Apply color (Distinguish colors by direction/status)
+        // Apply color
         color slotColor = clrWhite;
-        if(sig.GetDir() == CX_DIR_BUY) {
-            slotColor = isPosition ? clrDodgerBlue : clrLightSkyBlue;
-        } else if(sig.GetDir() == CX_DIR_SELL) {
-            slotColor = isPosition ? clrTomato : clrLightCoral;
-        } else {
-            slotColor = isPosition ? clrGold : clrWheat;
-        }
-        m_elements[slotIdx].Line1.Color(slotColor);
-
-        bool isTSTriggered = false;
-        if(isPosition && sig.GetTSStart() > 0) {
-            double profit = (currentPrice - sig.GetPriceOpen()) * (-dirSign);
-            if(profit >= sig.GetTSStart() * point) {
-                isTSTriggered = true;
-            }
-        }
+        if(sig.GetDir() == CX_DIR_BUY) slotColor = isPosition ? clrDodgerBlue : clrWheat;
+        else if(sig.GetDir() == CX_DIR_SELL) slotColor = isPosition ? clrTomato : clrLightCoral;
         
-        color slotColorL2 = slotColor;
-        if(isTrailing) {
-            slotColorL2 = clrRed; // Change to red during trailing
-        } else if(isTSTriggered) {
-            slotColorL2 = clrLime;
-        }
-        m_elements[slotIdx].Line2.Color(slotColorL2);
+        m_elements[slotIdx].Line1.Color(slotColor);
+        m_elements[slotIdx].Line2.Color(isTrailing ? clrRed : slotColor);
 
         m_elements[slotIdx].Line1.Description(txtL1);
         m_elements[slotIdx].Line2.Description(txtL2);

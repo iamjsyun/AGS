@@ -53,8 +53,15 @@ public:
         ICXPriceManager* priceMgr = m_factory.CreatePriceManager(m_xp.GetContext());
         if(IS_VALID(priceMgr)) {
             string sym = sig.GetSymbol(); int dir = sig.GetDir();
+            
+            // [v2.7 Redesign] Capture Discovery Market Price
+            double mktDiscovery = priceMgr.GetMarketPrice(sym, dir);
+            sig.SetPrice(mktDiscovery);
+
+            // Calculate Entry Price (Discovery Mkt +/- TE_LIMIT)
             double execPrice = priceMgr.CalculateExecPrice(m_xp, sym, dir, sig.GetType(), sig.GetTELimit());
-            double basePrice = (sig.GetType() == ORDER_MARKET) ? priceMgr.GetMarketPrice(sym, dir) : execPrice;
+            double basePrice = (sig.GetType() == ORDER_MARKET) ? mktDiscovery : execPrice;
+            
             sig.SetPriceOpen(execPrice);
             sig.SetPriceSL(priceMgr.CalculateSL(m_xp, sym, dir, basePrice, sig.GetSL()));
             sig.SetPriceTP(priceMgr.CalculateTP(m_xp, sym, dir, basePrice, sig.GetTP()));
